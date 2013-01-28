@@ -1,0 +1,74 @@
+---
+layout: post
+title: "使用dlxxx()动态加载库文件"
+---
+
+p. 函数原型:
+
+{% highlight c %}
+#include <dlfcn.h>
+void *dlopen(const char *filename, int flag);
+char *dlerror(void);
+void *dlsym(void *handle, const char *symbol);
+int dlclose(void *handle);
+{% endhighlight %}
+
+p. 编译时gcc参数 -ldl
+dlopen参数flag:
+# RTLD_LAZY    推迟加载（有点像copy on write技术)
+# RTLD_NOW     立刻加载
+# RTLD_GLOBAL  可以使得子library进行调用
+# RTLD_LOCAL   与RTLD_GLOBAL相反
+# RTLD_NOLOAD  不加载， 可用于测试是否已经驻留在程序中
+# RTLD_DEEPBIND
+
+范例:
+
+{% highlight c %}
+/* 程序加载libm.so， 拿到求cos值的函数的地址, 计算cos(2*PI) */
+#include <stdio.h>
+#include <stdlib.h>
+#include <dlfcn.h>
+
+int main(int argc, char **argv)
+{
+	void *handle;
+	double (*cosine) (double);
+	char *error;
+
+	handle = dlopen("libm.so", RTLD_LAZY | RTLD_LOCAL);
+	if (!handle) {
+		fprintf(stderr, "%s\n", dlerror());
+		exit(EXIT_FAILURE);
+	}
+
+	dlerror();		/* Clear any existing error */
+
+	// 两种转换方法:
+	/**(void **)(&cosine) = dlsym(handle, "cos");*/
+	cosine = (double (*)(double))dlsym(handle, "cos");
+
+	if ((error = dlerror()) != NULL) {
+		fprintf(stderr, "%s\n", error);
+		exit(EXIT_FAILURE);
+	}
+	printf("%f\n", (*cosine) (2*3.1415926));
+
+	cosine = dlsym(handle, "cos");
+	if ((error = dlerror()) != NULL) {
+		fprintf(stderr, "%s\n", error);
+		exit(EXIT_FAILURE);
+	}
+	printf("%f\n", (*cosine) (2*3.1415926));
+
+	dlclose(handle);
+	exit(EXIT_SUCCESS);
+}
+{% endhighlight %}
+
+p. 使用这种方式的动态加载好处是我们可以定义一些模块， 在配置文件中指定需要加载的各个模块，这就为c实现更高层次的多态提供了可能， 这种方式在很多linux的项目中得到了使用， 我们先看一下apache httpd， 如今的apache已经从最初的httpd发展为现在的apache软件基金会，大量的project, 因此apache本身提供了一个跨平台的运行库:Apache Portable Runtime(apr), 以及在这之上的unitl:apr-util库, 包括对dlxxx()的封装.
+
+h2. 参考
+* <a href="http://httpd.apache.org/docs/2.4/dso.html">Dynamic Shared Object (DSO) Support</a>
+
+

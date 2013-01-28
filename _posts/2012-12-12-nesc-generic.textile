@@ -1,0 +1,246 @@
+---
+layout: post
+title: "nesC generic 关键字"
+---
+
+学习TinyOS, 一开始很迷惑关键字generic关键字, 虽然知道这样就可以new出多个实例, 但是这种朦胧的感觉却持续了很久, 最近重新审视TinyOS, 得以写下这篇理解.接下来我会用几个实例来阐述怎么使用generic.
+
+h3. 什么是generic
+
+nesc的generic分为generic interface和generic component翻译过来就是通用接口和通用配件.通用接口和C++的template很类似, 我们不去讨论, 因为使用起来是没有歧义的.对于通用配件我们来看看具体的困惑是什么:
+
+
+h3. 实例1:
+
+大家可能会被源代码弄乱, 解释一下:就是在generic configuration内部使用具体的module然后new多个这样的configuration, 看看什么效果, 真的new出多个了吗?
+
+{% highlight c %}
+//ITest.nc
+interface ITest {
+	command void test(void);
+	event void testDone(int val);
+}
+{% endhighlight %}
+
+{% highlight c %}
+// GeneriConfC.nc
+generic configuration GeneriConfC() {
+	provides interface ITest;
+}
+implementation {
+	components OrdinaryModuleP;
+	ITest = OrdinaryModuleP;
+}
+{% endhighlight %}
+
+{% highlight c %}
+// OrdinaryModuleP.nc
+module OrdinaryModuleP {
+	provides interface ITest;
+}
+implementation {
+	int localVar = 0;
+
+	command void ITest(void)
+	{
+		localVar++;
+		signal ITest.testDone(localVar);
+	}
+}
+{% endhighlight %}
+
+{% highlight c %}
+// TopAppC.nc
+configuration TopAppC {
+}
+implementation {
+	components TopC as App;
+	components new GenericConfC() as G1;
+	components new GenericConfC() as G2;
+	App.ITest -> G1;
+	App.ITest2 -> G2;
+}
+{% endhighlight %}
+
+{% highlight c %}
+// TopC.nc
+#include <stdio.h>
+
+module TopC {
+	uses interface ITest;
+	uses interface ITest as ITest2;
+}
+implementation {
+	int main() @C() @spontaneous() {
+		call ITest.test();
+		call ITest2.test();
+	}
+
+	event void ITest.testDone(int val)
+	{
+		printf("event ITest.testDone: %d\n", val);
+	}
+
+	event void ITest2.testDone(int val)
+	{
+		printf("event ITest2.testDone:%d\n", val);
+	}
+}
+{% endhighlight %}
+
+* 编译生成app.c :            > nescc TopAppC.nc -fnesc-cfile=app.c
+* 编译生成可执行文件a.out    > nescc TopAppC.nc
+
+{% highlight text %}
+运行结果:
+van9ogh@VAN9OGH $ ./a.out 
+event ITest2.testDone:1
+event ITest.testDone: 1
+event ITest2.testDone:2
+event ITest.testDone: 2
+{% endhighlight %}
+
+{% highlight text %}
+// app.c(删去了没必要的声明, 留下真正相关的代码)
+int OrdinaryModuleP$localVar = 0;
+
+static inline void TopC$ITest$testDone(int val) { printf("event ITest.testDone: %d\n", val); }
+
+static inline void TopC$ITest2$testDone(int val) { printf("event ITest2.testDone:%d\n", val); }
+
+inline static void OrdinaryModuleP$ITest$testDone(int val) {
+  TopC$ITest2$testDone(val);
+  TopC$ITest$testDone(val);
+}
+static inline void OrdinaryModuleP$ITest$test(void ) {
+  OrdinaryModuleP$localVar++; 
+  OrdinaryModuleP$ITest$testDone(OrdinaryModuleP$localVar); 
+}
+
+inline static void TopC$ITest$test(void ) { OrdinaryModuleP$ITest$test(); }
+inline static void TopC$ITest2$test(void ){ OrdinaryModuleP$ITest$test(); }
+
+int main(void ) {
+  TopC$ITest$test();
+  TopC$ITest2$test();
+}
+{% endhighlight %}
+
+我们看到好像并没有生成两份代码拷贝的意思, 而且打印出来的结果也很令人诧异, 我们注意到不同的函数调用实际上被转发到相同的OrdinaryModuleP内部, 而对于event的处理, nesC采用广播的方式, 每一次signal其实都是将所有相关的command通知一遍.我们发现这个样子的代码几乎没有什么用处, 但我们也发现了一条可以用来广播的技巧, 不过我们还是不要趟浑水.
+
+
+h3. 实例2:
+
+这次我们看看正确的用法:(为了便于查看还是将所有的代码贴出)
+
+{% highlight c %}
+// ITest.nc
+interface ITest {
+	command void test(void);
+	event void testDone(int val);
+}
+{% endhighlight %}
+
+{% highlight c %}
+// GenericModuleP.nc
+#include <stdio.h>
+
+generic module GenericModuleP() {
+	provides interface ITest;
+}
+implementation {
+	int localVar = 0;
+
+	command void ITest.test(void)
+	{
+		localVar++;
+		signal ITest.testDone(localVar);
+	}
+}
+{% endhighlight %}
+
+{% highlight c %}
+// TopC.nc
+module TopC {
+	uses interface ITest;
+	uses interface ITest as ITest2;
+}
+implementation {
+	int main() @C() @spontaneous() {
+		call ITest.test();
+		call ITest2.test();
+	}
+
+	event void ITest.testDone(int val)
+	{
+		printf("event ITest.testDone: %d\n", val);
+	}
+
+	event void ITest2.testDone(int val)
+	{
+		printf("event ITest2.testDone:%d\n", val);
+	}
+}
+{% endhighlight %}
+
+{% highlight c %}
+// TopAppC.nc
+configuration TopAppC {
+}
+implementation {
+	components TopC as App;
+	components new GenericModuleP() as G1;
+	components new GenericModuleP() as G2;
+	App.ITest -> G1;
+	App.ITest2 -> G2;
+}
+{% endhighlight %}
+
+编译就不说了, 我们看看运行结果:
+
+{% highlight text %}
+van9ogh@VAN9OGH $ ./a.out 
+event ITest.testDone: 1
+event ITest2.testDone:1
+{% endhighlight %}
+
+我们看到这次正常了.我们再看看源代码验证一下:
+
+{% highlight text %}
+// app.c
+int GenericModuleP$0$localVar = 0;
+int GenericModuleP$1$localVar = 0;
+
+static inline void TopC$ITest$testDone(int val) { printf("event ITest.testDone: %d\n", val); }
+
+inline static void GenericModuleP$0$ITest$testDone(int val){
+  TopC$ITest$testDone(val);
+}
+static inline void GenericModuleP$0$ITest$test(void )
+{
+  GenericModuleP$0$localVar++;
+  GenericModuleP$0$ITest$testDone(GenericModuleP$0$localVar);
+}
+
+inline static void TopC$ITest$test(void) { GenericModuleP$0$ITest$test(); }
+static inline void TopC$ITest2$testDone(int val) { printf("event ITest2.testDone:%d\n", val); }
+
+inline static void GenericModuleP$1$ITest$testDone(int val) { TopC$ITest2$testDone(val); }
+static inline void GenericModuleP$1$ITest$test(void )
+{
+  GenericModuleP$1$localVar++;
+  GenericModuleP$1$ITest$testDone(GenericModuleP$1$localVar);
+}
+
+inline static void TopC$ITest2$test(void) { GenericModuleP$1$ITest$test(); }
+int main(void) {
+  TopC$ITest$test();
+  TopC$ITest2$test();
+}
+{% endhighlight %}
+
+我们看到代码被完完全全复制了两份.
+
+h3. 总结: 
+
+不要认为new出来的就真的是一份新的, nesC语言也存在深复制和潜复制的问题, 因此我们在使用generic时要谨慎, 如果使用generic configuration要保证内部的配线也要是generic module 而不是简单的module.

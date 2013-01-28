@@ -1,0 +1,47 @@
+---
+layout: post
+title: "使用jekyll搭建轻量级博客"
+---
+
+<h2>为什么</h2>
+
+p. 马上就大三了，写过的博客有几个但都没有能够坚持下来，一方面是由于项目在身， 学习总是渴求狼吞虎咽式,这本身其实也浪费了很多时间， 学习总是没有能够静下心来， 读了很多书都不求甚解， 我知道这不是我想要的， 之前在google reader上一直订阅几个技术博客， 十分钦佩他们能够坚持走下来， 也萌生了写技术博客的想法， 但一直没有行动， 趁着暑假， 我知道我该行动了。
+*  "(blog)coolshell(酷壳)":http://coolshell.cn
+*  "(blog)mindhacks(刘未鹏)":http://mindhacks.cn
+*  "(blog)codingnow(云风)":http://codingnow.com
+*  "(blog)yangzhiping(阳志平)":http://www.yangzhiping.com
+
+<h2>资料</h2>
+* "(blog)像黑客一样写博客":http://www.soimort.org/tech-blog/2011/11/19/introduction-to-jekyll_zh.html
+* "(blog)使用Github Pages建独立博客":http://beiyuu.com/github-pages/
+* "(blog)基于jekyll的github建站指南":http://jiyeqian.github.com/2012/07/host-your-pages-at-github-using-jekyll/
+
+p. 作者讲的很清楚， 我觉得主要是购买域名麻烦一点， 估计在学校期间先凑合着使用github-page，以后工作了再去GoDaddy购买域名的。
+
+h2. 关于语法高亮
+
+<p>_layout/post.html</p>
+<p>关于语法高亮， 主要是使用javascript, 你也可以到<a href="http://code.google.com/p/syntaxhighlighter/">google code</a>上去下载, 这里直接使用了amazon上的js资源</p>
+
+{% highlight html %}
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shCore.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushRuby.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushPhp.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushXml.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushCss.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushBash.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushJScript.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushCpp.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushJava.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushCSharp.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushPython.js"></script>
+<script language="javascript" src="http://communicatopia.s3.amazonaws.com/js/shBrushSql.js"></script>
+<script language="javascript">
+dp.SyntaxHighlighter.ClipboardSwf = 'http://communicatopia.s3.amazonaws.com/js/clipboard.swf';
+//name, showGutter, showControls, collapseAll, firstLine , showColumns
+dp.SyntaxHighlighter.HighlightAll('code',false, false,false,1,false);
+</script>
+{% endhighlight %}
+
+<h2>目标</h2>
+p. 今年写30篇以上博客

@@ -1,0 +1,183 @@
+---
+layout: post
+title: "TinyOS: MagXC.nc"
+---
+
+h2. 说明
+
+本来想继续翻译Philip Levis那篇文章的, 不过对于ADC其实我并不是太理解, 所以还是先探究一下tos/sensorboards/mts300下的组件.下面我们选择tos/sensorboards/mts300/MagXC.nc来探究一下, 看看到底为什么我们只需要call MagX.read数据就出来了?其实这中间走了许多层, 出现了若干我们未知的领域.分析完以后我们自己通过纯手写一个底层的nesC源代码烧到micaz节点上, 看看是不是和我们预期所想的一样. 我想这种探究还是很有意思的.
+
+h3. MagXC.nc
+
+这是一个HIL层的地磁场传感器的读取接口, 用户只需要将read接口连接上去即可, 非常的易于使用, 我们先来看看内部的实现:
+
+{% highlight c %}
+#include "mts300.h"
+
+generic configuration MagXC()
+{
+  provides interface Mag;
+  provides interface Read<uint16_t>;
+}
+implementation {
+  enum {
+	ID = unique(UQ_MAG_RESOURCE)
+  };
+  
+  components MagReadP,MagConfigP, new AdcReadClientC() as AdcX;
+
+  Mag = MagReadP;
+
+  Read = MagReadP.MagX[ID];
+  MagReadP.ActualX[ID] -> AdcX;
+  AdcX.Atm128AdcConfig -> MagConfigP.ConfigX;
+}
+{% endhighlight %}
+
+其实TinyOS的代码是很好理解的, 只是有时候会将初学者跳晕掉, 太多的配线了, 我们不理解的是为什么解决一个问题要这么麻烦, 干嘛搞这么多的配线啊.其实只要我们理解了这其中的模式, 知道了每一个组件所处的层次, 也就明了了:有时候不是非要这么多配线, 这就是设计层面上的优雅性了, 作者只是将功能很好的分了一个层次. 这样的设计到底好不好, 我们也无法评判, 毕竟传感器网络操作系统的设计, 没有什么可以借鉴的, 很多决策都是在不可预知的情况下作出的.扯远了.
+
+我们发现这个组件内部全是configuration, 没有module, 那么说明这一层面上所需要的条件都已经具备了, 只需要配置一下就可以了, 不需要写真正的代码.因此写这样的代码就对读者提出了一个要求:你要明白你想要什么以及你通过什么达到这样的目的.这基本就是TinyOS接口所要表达的意思了.比如这个例子:我们希望能够读取这个传感器的数据, 而且最好还能对传感器获取传感器的一些设置.那么我们必须要找到这样功能的组件能提供类似于Read和Mag接口, 幸运的是这货还真有:MagReadP.nc但是新的问题出现了, 这个组件还需要配置接口ActualX, 如果我们查看这个组件内部, 发现其实这个组件只是帮我们解决了Mag接口的需求, 但是Read接口它也不会, 它只是做了一个代理仍给了别人, 并且把它换了一个包装叫做:ActualX(还蛮真诚的), 那么到底谁会提供真正的读取传感器数据的功能呢?我们找到了AdcReadClientC.nc, 这下好了问题基本解决了, 只是这家伙还需要一个接口Atm128AdcConfig接口, 大概和芯片的配置有关, 我们得找找了, 幸好, 这就是MagConfigP.nc, 这个组件没有再uses什么其它的接口, 任务就完成了, 松了一口气.接下来实际上就是将我们找到的这些组件配在一起, 就OK了.
+
+有些读者觉得这简直就在糊弄人, 这种分析方法只是自顶向下的, 前提是你必须是糕富帅, 你要什么有什么, 其实笔者只是提供了这样一个思路, 说明TinyOS的这种设计哲学, 这恰恰和真实社会的组织结构非常相似, 这就是社会分工, 每个人都或多或少的能够为别人提供一些服务, 同时他也需要借助别人的力量, 在TinyOS这个世界里, 我们就像BOSS一样, 我们有很多这样忠实的组件, 我们需要做的事情就是发挥BOSS的作用.读者如果从现实社会中走一遭, 或许会发现还是代码的世界乐趣多:), 其实相对于这些代码的复杂度是没法和现实社会的复杂度所相比的.因此我们不要抱怨学习一个新的工具又是一大陀文档啊什么的, 要从根本上热爱他们!比如tinyos的官方文档http://www.tinyos.net/tinyos-2.1.0/doc/nesdoc/micaz/, 其实每一个配线图都是一张社交图谱, 它们就活跃在你的眼皮底下, 不要错过他们!社会分工其实在什么年代都不会消亡, 即使在遥远的未来, 只是那时人换成了机器, 或许那时我们的文档上的组件换成了真正的AI机器, 程序员的编程方式发生了根本的改变.
+
+从这个角度来说, 我们就不再困惑为什么配线图这么复杂, 也就明白了构建大型的软件是需要时间的, 可能包括一些重构, 我们要做的就是利用这种架构快速的开发自己的应用, 并在喝咖啡的时候, 从美学角度审视她, 观察她的每一个部分, 深入进去.我想这就是为什么对于一个设计的优美的软件系统程序员会发疯, 一旦理解了其中的精髓, 我们会被深深的迷住.
+
+h3. ADC
+
+忘了我们今天的主题是讨论ADC, 我们继续:)
+
+从上一段的讲述中我们得知MagXC.nc Read接口部分是AdcReadClientC.nc做的, 我们继续发现:
+
+果不其然, 这个文件在tos/chips/atm128/adc中, 按照上一节的方法, 我们发现"真正"提供Read功能的组件来自WireAdcP.nc, 对于其它组件我们不再驻足观看, 而WireAdcP.nc的Read来自AdcP.nc, 然后发现AdcP.nc也是做了代理, 最终和两个文件相关:
+
+Atm128AdcP.nc和HplAtm128AdcP.nc, 之所以不再说一个文件, 因为再继续查看下去会到达中断处理函数, 其实最终读取数据并不是都是那个函数在干, 还需要上一层的组件来配置一下寄存器, 或许还要开启一些中断, 基本上就是这样了, 接下来我们详细剖析这两个组件.
+
+h3. Atm128AdcP.nc AND HplAtm128AdcP.nc
+
+我们来看核心代码:
+上层应用程序的Read需求经过层层代理转发, 到达了这一层的一个函数:(Atm128AdcP.nc), 我进行了注释.
+
+{% highlight c %}
+	void getData(uint8_t channel, uint8_t refVoltage, bool leftJustify, uint8_t prescaler) {
+		Atm128Admux_t admux;     // ADMUX 寄存器
+			
+		Atm128Adcsra_t adcsr;    // ADCSR 寄存器
+
+		admux = call HplAtm128Adc.getAdmux();
+		f.precise = isPrecise(admux, channel, refVoltage);
+		f.channel = channel;
+
+		admux.refs = refVoltage;
+		admux.adlar = leftJustify;
+		admux.mux = channel;
+		call HplAtm128Adc.setAdmux(admux);
+
+		adcsr.aden = ATM128_ADC_ENABLE_ON;
+		adcsr.adsc = ATM128_ADC_START_CONVERSION_ON;
+		adcsr.adfr = f.multiple;
+		adcsr.adif = ATM128_ADC_INT_FLAG_ON; // clear any stale flag
+		adcsr.adie = ATM128_ADC_INT_ENABLE_ON;
+		if (prescaler == ATM128_ADC_PRESCALE)
+		  prescaler = call Atm128Calibrate.adcPrescaler();
+		adcsr.adps = prescaler;
+		call HplAtm128Adc.setAdcsra(adcsr);
+  }
+
+  async command bool Atm128AdcSingle.getData(uint8_t channel, uint8_t refVoltage,
+					     bool leftJustify, uint8_t prescaler) {
+    atomic
+      {
+	f.multiple = FALSE;
+	getData(channel, refVoltage, leftJustify, prescaler);
+
+	return f.precise;
+      }
+  }
+{% endhighlight %}
+
+在更底层的HplAtm128AdcP.nc我们又发现了中断处理函数:
+
+{% highlight c %}
+	async command uint16_t HplAtm128Adc.getValue() { 
+		return ADC; 
+	}
+
+	/* A/D interrupt handlers. Signals dataReady event with interrupts enabled */
+	AVR_ATOMIC_HANDLER(SIG_ADC) {
+    uint16_t data = call HplAtm128Adc.getValue();
+    
+    __nesc_enable_interrupt();
+    signal HplAtm128Adc.dataReady(data);
+	}
+{% endhighlight %}
+
+使用avr128的ADC我们需要知道3个寄存器: ADMUX、ADCSRA、SIFOR, ADMUX主要用来设置一些参数,比如参考电压、对齐方式、模拟通道、增益选择.而ADCSRA寄存器主要是用来控制的, 比如使能啊, 中断啊什么的.还有SIFOR则是一个特殊功能寄存器, 主要用在快速ADC中.具体这三个寄存器各个位表示什么意思我就不一个一个说了大家可以去手册查询, 用起来是相当方便的, 一般而言你只需要设置好这三个寄存器, 然后就乖乖的等中断自己到来吧, 当然中断函数你得写好咯.有一个注意点是如果工作在非连续模式下, 转换结束我们要将ADCSRA寄存器的ADEN置为0关闭它, 等待下一次开启.(当然更严谨的还要设置其它位, 不过这个设置好就可以读取数据了).
+
+参考我们的研究结果, 写一个一步到位的, 巩固一下. 也就是说我们要写驱动啦!
+
+h3. ADC 例子
+
+{% highlight c %}
+module TempDeviceP {
+	provides interface Read<uint16_t> as Temp;
+	provides interface Init as SoftwareInit;
+}
+implementation {
+	volatile uint16_t data;
+
+	command error_t SoftwareInit.init()
+	{
+		// 这里的两句话不是凭空出现的, 读者如果有crossbow的micaz节点
+		// 和mts300cb传感器背板就知道了, PW0管脚是用来给温度传感器
+		// 供电的!
+		DDRC  |= (1 << 0);   // PW0位设置为输出
+		PORTC |= (1 << 0);   // PW0位设置为High
+		return SUCCESS;
+	}
+
+	command error_t Temp.read()
+	{
+		// 这个是mica tempeature的配置
+		ADMUX = 0x21;        // 0010 0001
+		                     // 位7、6 REFS1~REFS0  : 00(以外部AREF为基准比较电压)
+		                     // 位5                 : 1 (左对齐)
+		                     // 位4~0 MUX4~MUX0     : 00001(channel1)
+
+		ADCSRA = 0xd8 | ATM128_ADC_PRESCALE_2;
+							 // 1101 1000
+		                     // 位7                 : 1 (ADC使能)
+		                     // 位6                 : 1 (开始转换)
+		                     // 位5                 : 0 (关闭连续工作模式)
+		                     // 位4                 : 1 (中断标志)
+		                     // 位3                 : 1  (中断使能)
+			                 // 位2,1,0             : 000 (不开预分频器)
+
+		SFIOR = 0x00;        // 不工作在快速模式下
+
+		return SUCCESS;
+	}
+
+	task void dataReady()
+	{
+		atomic {
+			signal Temp.readDone(SUCCESS, data);
+		}
+		CLR_BIT(ADCSRA, ADEN);  // 结束以后手动将ADCSRA的ADEN为置0
+	}
+
+	// ADC中断处理函数, 这个是avr-gcc的写法, 后面的hwevent是nesc内部的
+	// 编译器注释, 表示这是一个硬件中断, 这样它会相应的进行一些处理.
+	// 再后面的@C()则表示这是一个C语言语句, nesc编译器不要对它进行重命名
+	void SIG_ADC() __attribute__ ((interrupt)) @hwevent() @C() {
+		atomic {
+			data = ADC;
+		}
+		post dataReady();
+	}
+}
+{% endhighlight %}
+
+用我的这个驱动, 我写了一个具体的, 读者可以将基站烧写为BaseStation, 然后将我的adc例子烧到另外一个节点上装上mts300cb传感器, 在pc机上用java net.tinyos.tools.Listen -comm serial@/dev/ttyUSB1:57600命令看看收到的结果, 当然这个adc还只是模拟值, 怎么变换大家自己去找公式咯.
+
+* [下载] <a href="/code/nesc/adc.tar.gz">adc.tar.gz</a>
+

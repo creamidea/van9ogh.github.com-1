@@ -1,0 +1,70 @@
+---
+layout: html
+---
+<article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>{{ page.title }}</h1>
+      {% if page.subtitle %}<h3 style="text-align: right;">{{ page.subtitle }}</h2>{% endif %}
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        {% if page.author %}
+          <a href="mailto:{{ page.author.email }}">{{ page.author.name }}</a>
+        {% else %}
+          <a href="mailto:{{ site.author.email }}">{{ site.author.name }}</a>
+        {% endif %}
+      </span>
+      at
+      <span class="date">
+        {{ page.date | date: '%A, %d %B %Y - %H:%M' }}
+      </span>
+    </p>
+    {% if page.updated %}
+    <p class="updated-time">
+      Last updated: <span class="date">{{ page.updated | date: '%A, %d %B %Y - %H:%M' }}</span>
+	</p>
+    {% endif %}
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	{% if page.tags != empty %}
+	  <strong>Tags:</strong> 
+	{% endif %}
+	  <ul>
+        {% for tag in page.tags %}
+          <li>{{ tag }}</li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </header>
+
+  {{ content }}
+
+  <footer>
+    {% include disqus.html %}
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            {% if page.previous %}
+        url = '{{ site.url }}{{ page.previous.url }}';
+        {% endif %}
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            {% if page.next %}
+        url = '{{ site.url }}{{ page.next.url }}';
+        {% endif %}
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>

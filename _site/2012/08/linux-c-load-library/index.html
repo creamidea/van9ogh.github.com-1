@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>使用dlxxx()动态加载库文件 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/08/linux-c-load-library/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+  <div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>使用dlxxx()动态加载库文件</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Monday, 13 August 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>函数原型:</p>
+<div class="highlight"><pre><code class="c"><span class="cp">#include &lt;dlfcn.h&gt;</span>
+<span class="kt">void</span> <span class="o">*</span><span class="nf">dlopen</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">filename</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flag</span><span class="p">);</span>
+<span class="kt">char</span> <span class="o">*</span><span class="nf">dlerror</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="o">*</span><span class="nf">dlsym</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">handle</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">symbol</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">dlclose</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">handle</span><span class="p">);</span>
+</code></pre></div><p>编译时gcc参数 -ldl<br />
+dlopen参数flag:</p>
+<ol>
+	<li>RTLD_LAZY    推迟加载（有点像copy on write技术)</li>
+	<li>RTLD_NOW     立刻加载</li>
+	<li>RTLD_GLOBAL  可以使得子library进行调用</li>
+	<li>RTLD_LOCAL   与RTLD_GLOBAL相反</li>
+	<li>RTLD_NOLOAD  不加载， 可用于测试是否已经驻留在程序中</li>
+	<li>RTLD_DEEPBIND</li>
+</ol>
+<p>范例:</p>
+<div class="highlight"><pre><code class="c"><span class="cm">/* 程序加载libm.so， 拿到求cos值的函数的地址, 计算cos(2*PI) */</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;dlfcn.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="kt">void</span> <span class="o">*</span><span class="n">handle</span><span class="p">;</span>
+	<span class="kt">double</span> <span class="p">(</span><span class="o">*</span><span class="n">cosine</span><span class="p">)</span> <span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+	<span class="kt">char</span> <span class="o">*</span><span class="n">error</span><span class="p">;</span>
+
+	<span class="n">handle</span> <span class="o">=</span> <span class="n">dlopen</span><span class="p">(</span><span class="s">&quot;libm.so&quot;</span><span class="p">,</span> <span class="n">RTLD_LAZY</span> <span class="o">|</span> <span class="n">RTLD_LOCAL</span><span class="p">);</span>
+	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">handle</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">dlerror</span><span class="p">());</span>
+		<span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+	<span class="p">}</span>
+
+	<span class="n">dlerror</span><span class="p">();</span>		<span class="cm">/* Clear any existing error */</span>
+
+	<span class="c1">// 两种转换方法:</span>
+	<span class="cm">/**(void **)(&amp;cosine) = dlsym(handle, &quot;cos&quot;);*/</span>
+	<span class="n">cosine</span> <span class="o">=</span> <span class="p">(</span><span class="kt">double</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">double</span><span class="p">))</span><span class="n">dlsym</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s">&quot;cos&quot;</span><span class="p">);</span>
+
+	<span class="k">if</span> <span class="p">((</span><span class="n">error</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+		<span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="n">printf</span><span class="p">(</span><span class="s">&quot;%f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">cosine</span><span class="p">)</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="mf">3.1415926</span><span class="p">));</span>
+
+	<span class="n">cosine</span> <span class="o">=</span> <span class="n">dlsym</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s">&quot;cos&quot;</span><span class="p">);</span>
+	<span class="k">if</span> <span class="p">((</span><span class="n">error</span> <span class="o">=</span> <span class="n">dlerror</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">error</span><span class="p">);</span>
+		<span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+	<span class="p">}</span>
+	<span class="n">printf</span><span class="p">(</span><span class="s">&quot;%f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">cosine</span><span class="p">)</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="mf">3.1415926</span><span class="p">));</span>
+
+	<span class="n">dlclose</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+	<span class="n">exit</span><span class="p">(</span><span class="n">EXIT_SUCCESS</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>使用这种方式的动态加载好处是我们可以定义一些模块， 在配置文件中指定需要加载的各个模块，这就为c实现更高层次的多态提供了可能， 这种方式在很多linux的项目中得到了使用， 我们先看一下apache httpd， 如今的apache已经从最初的httpd发展为现在的apache软件基金会，大量的project, 因此apache本身提供了一个跨平台的运行库:Apache Portable Runtime(apr), 以及在这之上的unitl:apr-util库, 包括对dlxxx()的封装.</p>
+<h2>参考</h2>
+<ul>
+	<li><a href="http://httpd.apache.org/docs/2.4/dso.html">Dynamic Shared Object (<span class="caps">DSO</span>) Support</a></li>
+</ul>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+        
+</div>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/08/dev-random/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/08/ajax-json-to-server/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+  </div>
+  <footer>
+    Site last generated: 2013-01-28T16:34:33+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

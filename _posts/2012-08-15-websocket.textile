@@ -1,0 +1,38 @@
+---
+layout: post
+title: "websocket"
+---
+
+p. 让数据实时显示一直有多种解决方案， 我们先把它们按照鄙视的食物链做一个rank:
+
+* 页面本身不断更新， 定时刷新浏览器（暴力型)
+* 使用ajax XMLHttpRequest 先GET/POST， 服务器响应后返回更新数据给浏览器
+* comet 长链接，服务器单方向发数据
+* websocket 双方握手， 像TCP一样， 以后通信不需要header
+
+p. 总体感觉是越来越和谐了， 最新的websocket还没有得到完全的支持，但对于目前大量的web应用程序来说已经有点迫不及待了，这就像etag被提出来一样，我们应该避免做或少做无用功， 减少代码对资源的消耗， 环保从代码做起, 大牛们从没停下脚步。
+
+p. 另外"Content-type:multipart/x-mixed-replace;boundary=www.briup.com"和"--www.briup.com"连用其实就是comet中<a href="http://www.ibm.com/developerworks/cn/web/wa-reverseajax1/index.html">多部分的 XMLHttpRequest</a>技术，这就是为什么在暑假briup视频采集项目, 浏览器端我们什么也没做，它却就帮我们不断显示图片，因为浏览器本身会维护一个长连接支持multi-part， 因此我们可以将这个长链接转移到XMLHttpRequest上面.
+
+{% highlight javascript %}
+var xhr = $.ajaxSettings.xhr(); 
+xhr.multipart = true; 
+xhr.open('GET', 'ajax', true); 
+xhr.onreadystatechange = function() { 
+	    if (xhr.readyState == 4) { 
+			        processEvents($.parseJSON(xhr.responseText)); 
+	    } 
+}; 
+xhr.send(null);
+{% endhighlight %}
+
+p. 此时在下一次连接之前， 本次的连接不会断开, 关键就是那个xhr.multipart = true, 其他的都一样. 但这是需要浏览器支持的.
+
+h2. 参考
+
+* <a href="http://en.wikipedia.org/wiki/WebSocket">websocket</a>
+* <a href="http://www.ibm.com/developerworks/cn/views/web/libraryview.jsp?view_by=search&sort_by=Date&sort_order=desc&view_by=Search&search_by=反向+Ajax+部分&dwsearch.x=14&dwsearch.y=15">反向ajax</a>
+
+h2. 补充(20120819)
+
+p. 从HTTP/1.1起，默认都开启了Keep-Alive，保持连接特性，简单地说，当一个网页打开完成后，客户端和服务器之间用于传输HTTP数据的TCP连接不会关闭，如果客户端再次访问这个服务器上的网页，会继续使用这一条已经建立的连接 Keep-Alive不会永久保持连接，它有一个保持时间，可以在不同的服务器软件（如Apache）中设定这个时间

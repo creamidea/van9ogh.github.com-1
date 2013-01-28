@@ -1,0 +1,310 @@
+---
+layout: post
+title: "Lua学习笔记(2): 协程"
+categories:
+- lua
+tags:
+- coroutine
+- DSL
+---
+
+这篇文章来自于阅读lua的作者写的[coroutines in lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf), 翻译了一部分, 又加入一些了自己的理解. 形式化描述那部分没有翻译, 还有一些关于continuation机制的也没有过多翻译, 这两个方面的链接已经列在文末.
+
+## 摘要
+
+协程在过去是一个被人遗忘的概念, 不过慢慢的又开始复兴, 大多数目前的协程实现的并不完整, 或多或少只能用在特定的场合.提供一个真正的协程往往被人所忽略, 本文一方面讨论的是Lua中的协程机制, 它是一个非对称协程的完全实现, 另一方面也向你展示这一强大的控制行为的工具.
+
+## 1. 简介
+
+协程是为了解决general control abstraction而提出的最古老建议之一, 贡献者是Conway(1963), 它被描述为行为像主程序的子程序, 当时的实现依靠的是COBOL编译器的词法分析和语义分析, 1980年的时候, Marlin的博士论文完整的描述了它的原理, 阐明了它的特征:
+>
+- the values of data local to a coroutine persist between successive calls(数据的持久性)
+- the execution of a coroutine is suspended as control leaves it, only to carry on where it left off when control re-enters the coroutine at some later stage.(并不是并发, 类似于时分多路)
+
+协程适用的场合来自于这些年的一些需求:并发编程、仿真、文本处理、人工智能以及各种数据结构的操作. 然而这一强大的control abstraction工具在通用语言设计的时候却被忽略了, 只有极少数的一些特例: Simula、BCPL、Modula2、Icon等语言.
+
+这中间, 一部分的原因就是对协程的概念没有一个统一的认识, 而且很多论文中对协程的描述都来自于Simula语言, 包括Marlin的. 然而Simula本身对协程复杂的实现导致了大家都认为它是一个尴尬的、难以维护和理解的实现.
+
+然而协程并没有真正被遗忘, 这些年它在慢慢复兴, 尤其是在以下两个不同的方面.一方面和开发多任务应用程序有关, 我们发现协作式的多任务比多进程环境更具有优势! 在这一应用场景中, 协程主要以library的形式出现, 比如微软的fibers(纤程), 有趣的是协程的术语都没有被提出来, 这就是需求, 因此随后概念会被技术人员抽象出来, 于是协程原地满血了.
+
+另一方面就是脚本语言, 特别是Lua, Python, Perl. Python最近推出了一个受限制的协程, 能够允许simple iterators或者generators, 但是还不是足够强大: 没有实现一些有趣的功能, 包括用户层面的多任务. Perl也提出了类似的机制. 不同的是Lua, 它是一个真正意义上的协程实现.
+
+本文的主要就是展示并讨论Lua中的协程机制, 安排是这样的: Section2主要是介绍一下Lua语言以及描述一下协程的机制, 提出它的操作语义(operational semantics). Section3将通过一些相关的demo来阐述这一强大的非对称协程的使用. 然后Section4将再次讨论其他语言中协程的情况. 最后Section5我们将做出总结.
+
+## 2. Lua Coroutines(Lua中的协程)
+
+Lua是一门轻量级的基于数据描述的通用编程语言, 特性有: dymanically typed, lexically scoped, interpreted from bytecodes, 以及垃圾回收. Lua主要被设计用来作为一门扩展语言, 嵌入到host program中(宿主主机).
+
+Lua一开始就是为了更容易整合到C/C++以及其它一些conventional language中而设计的, Lua的本身是用ANSIC写成的(纯C), 因此可以支持相当多的平台, 除了Lua的解释器, Lua本身也提供了一组C function API集合, 允许host program可以和Lua通信, 通过这组API, host program就可以访问Lua脚本中的变量、调用Lua脚本中的函数了.除了这种embedded功能, 我们还可以利用这组API进行extending, 这样我们就可以在Lua脚本中调用C函数了!从这个角度, Lua可以用来构造[DSL](http://en.wikipedia.org/wiki/Domain-specific_language).
+
+Lua主要实现的是非对称协程, 通常被表示为semi-symmetric或者semi-coroutines, 之所以这样称呼, 是因为它有两种控制操作, 一个是为了调用(invoke)协程, 另一个是为了挂起(suspend)协程, 一旦挂起就可以返回到其他的调用协程了. 非对称协程可以认为是服从于调用者, 它们之间类似于被调用和调用例程的关系, 和这个不同的是对称的协程, 它只是简单的transfer operation来切换.由于对称协程是将控制传递给selves的, 因此selves是在同一个继承级别上的. 看似这两者都没有问题, 那为什么Lua最终选择非对称coroutine而不是对称或者他们两者呢? 我们还是有一些理由的.
+
+__其一__, 对称和非对称协程语言表达能力上是不同的, 而通用的协程机制本应该都提供, 然而事实上我们很容易演示的是对称协程可以由非对称协程来表达, 因此即使仅仅提供非对称协程, 语言的表达能力并没有被削弱, 实现它们两者只会增加语言语义的复杂度. 其实正是由于引入了对称协程导致了Simula语言在语义上的不一致.这就好比[语法糖](http://en.wikipedia.org/wiki/Syntactic_sugar), 其实基本的语义已经覆盖了这些功能, 添加语法糖只不过是方便了使用它的人, 但如果滥用, 就会将语言推向深渊. 读者还可以看看图灵等价, 这些思想就像当年的能量守恒定律一样, 是在维护一些科学的基本原则, 让人们明白发明能够解决一些问题的计算机语言就和永动机一样, 都不靠谱. 
+
+__其二__, Simplicity and Portability
+
+__其三__, 更容易整合到宿主program
+
+## 2.1 Lua Coroutine Facilities
+
+Lua协程提供了三种基本的操作: create, resume, yield. 和大多数Lua的库一样, 这些函数在一张全局表内.(coroutine)
+
+### coroutine.create
+
+{% highlight lua %}
+--[[ 创建一个新的协程, 并为它分配一个独立的栈, 接受一个函数作为参数, 返回这个coroutine的引用.
+     并没有excute coroutine, 这个新协程一开始被挂起, 通常参数f作为匿名函数来传入
+	 co = coroutine.create(function () ... end)
+--]]
+coroutine.create(f)
+{% endhighlight %}
+
+Lua coroutine以变量的方式被存储, 能够被当作函数参数, 或者被函数返回, 并没有严格提供删除协程的操作, 这个和Lua中其他的值一样, 通过垃圾回收机制来释放.
+
+### coroutine.resume
+
+{% highlight lua %}
+--[[ 激活一个协程, 第一个参数是一个协程的引用, 就是由coroutine.create返回的那个, 一旦
+     恢复运行, 协程会在上一次断点处继续运行直到再次被挂起或者结束.
+--]]
+coroutine.resume(co [, val1, val2, ...])
+{% endhighlight %}
+
+### coroutine.yield
+
+{% highlight lua %}
+--[[ 挂起一个协程, 此时该协程的运行状态立刻被保存, 直到调用coroutine.resume, 注意yield参数
+     就是resume返回的参数的后面部分, 读者可以对比一下.
+--]]
+coroutine.yield([val1, val2, ...])
+{% endhighlight %}
+
+由于协程是在一个独立的栈内实现的, coroutine.yield甚至允许发生在嵌套Lua函数(比如直接或间接地调用lua main function)一旦下一次协程resume, 它就会在完全在上一次的断点处继续执行.哪里跌倒就会在哪里爬起来.
+
+
+__那么协程什么时候结束呢?__ 
+
+- 主函数返回的时候, 这个时候我们可以说协程Dead, 再也不会被恢复
+- 运行过程中发生错误的时候, 正确返回的时候, coroutine.resume返回(true, [val1, val2, ...]), 而错误的时候将返回(falue, "error message").
+
+### coroutine.wrap
+
+__Lua有一个auxiliary library, 其中对coroutine又作了一些扩展, coroutine.wrap就是一个.__
+
+{% highlight lua %}
+--[[ 这个函数和coroutine.create类似, 其实是coroutine.create和coroutine.resume的包装:
+
+function wrap(f)
+	local co = coroutine.create(f)
+	return function(v)
+		status, ret = coroutine.resume(co, v)
+		if status then
+			return ret
+		else
+			error(ret)
+		end
+	end
+--]]
+coroutine.wrap(f)
+{% endhighlight %}
+
+lua提供了非常便捷的方法来让协程和它的调用者exchange data, 我们来看一些demo:
+
+{% highlight lua %}
+co = coroutine.wrap(function (a) 
+		local c = coroutine.yield(a + 2)
+		return c * 2
+	 end)
+
+-- 协程第一次被激活
+b = co(20)  -- 此时 b = 22
+
+-- 协程第二次被激活
+d = co(b+1) -- 此时d = 23 * 2 = 46
+{% endhighlight %}
+
+## 2.2 An Operational Semantics for Lua Asymmetric Coroutines(非对称协程的操作语义)
+
+__这一节为纯数学推导和定义, 可以参考[原文](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf)和[HIEB 1994](http://www.cs.indiana.edu/~dyb/pubs/LaSC-7-1-pp83-110.pdf)两篇论文.__
+
+## 3. Programming With Lua Asymmetric Coroutines
+
+这一节我们从两个应用来围观Lua中非对称协程这一强大的特性: 生成器(generators)和协作式多任务(cooperative multitasking).
+
+### 3.1 生成器(generators)
+
+生成器就是用来产生值序列的工具, 每一次调用都返回一个新的值, 有一个典型的例子就是迭代器(iterator).
+
+__demo1.lua__ : 二叉树的先序遍历
+
+{% highlight lua %}
+-- 三个叶子
+d = { key = "d" }
+e = { key = "e" }
+c = { key = "c" }
+
+-- 三个内部节点
+b = { left = d, right = e, key = "b" }
+a = { left = b, right = c, key = "a" }
+
+-- 先序遍历二叉树
+function preorder(node)
+	if node then
+		preorder(node.left)
+		coroutine.yield(node.key)
+		preorder(node.right)
+	end
+end
+
+-- 迭代器
+function preorder_iterator(tree)
+	return coroutine.wrap(function () preorder(tree) end)
+end
+
+-- 使用范型for
+seq = ""
+for node in preorder_iterator(a) do
+	seq = seq .. node .. " "
+end
+
+-- 打印结果为: d b e a c
+print(seq)
+{% endhighlight %}
+
+整个执行是这样的: preorder_iterator迭代器只会运行一次, 接下来范型for每一次都会调用由coroutine.wrap返回的函数(暂时称为f), 直到node为nil, 迭代结束. 而f的返回值由coroutine.yield带出来的, 因此print每次打印的都是node.key.
+
+
+__我们再看一个例子__
+
+__demo2.lua__: 合并两棵二叉树
+
+{% highlight lua %}
+-- 第一棵树, root为a
+
+d = { key = "d" }
+e = { key = "e" }
+c = { key = "c" }
+
+b = { left = d, right = e, key = "b" }
+a = { left = b, right = c, key = "a" }
+
+-- 第二棵树, root为n
+f = { key = "f" }
+h = { key = "h" }
+g = { key = "g" }
+
+m = { left = f, right = h, key = "m" }
+n = { left = g, right = m, key = "n" }
+
+function preorder(node)
+	if node then
+		preorder(node.left)
+		coroutine.yield(node.key)
+		preorder(node.right)
+	end
+end
+
+function preorder_iterator(tree)
+	return coroutine.wrap(function () preorder(tree) end)
+end
+
+function merge(t1, t2)
+	-- 生成两个迭代器函数
+	local it1, it2 = preorder_iterator(t1),
+					 preorder_iterator(t2)
+	-- 首先由迭代器分别从它们自己的树上吐出key
+	local v1, v2 = it1(), it2()
+
+	while v1 or v2 do
+	    -- 比较这两棵树上的key的大小, 优先输出小的
+		if v1 ~= nil and (v2 == nil or v1 < v2) then
+			print(v1); v1 = it1()
+		else
+			print(v2); v2 = it2()
+		end
+	end
+end
+
+merge(n, a) -- 输出结果为d b e a c g n f m n
+{% endhighlight %}
+
+
+生成器(generators)还可以用于面向目的的编程(goal-oranted programming), 比如编写类似于[Prolog](http://zh.wikipedia.org/zh-cn/Prolog)查询或者模式匹配的时候, 你不需要知道怎么去做, 你只要制定一个目标, 接下来让计算机帮你找到这个目标.其实这是通过回溯来完成的.
+
+### 3.2 User-Level Multitasking
+
+用协程来完成并行一开始是在Modula-2语言中, 但是后来由于线程(threads)的出现, 协程就被人们忽略了.
+
+但是使用协程来完成并发任务的语言并不需要额外的数据结构来保证数据的一致性, 这个和基于抢占的多任务不同, 协程提供的并发机制叫做协作多任务.也就是当你不需要使用资源的时候就挂起自己来让别的人来使用.
+
+编写多线程应用程序确实不是一个简单的任务, 特别是在某些环境中, 比如操作系统, 实时应用程序等, 它们对实时性要求特别高, 基于抢占的多任务就很难做到了.它们往往要考虑如何制定完善的同步策略, 再加上很多的开发者并没有多少并发编程的经验, 这个就有点像<<人月神话>>了, 系统越大, 问题越大.协作式多任务消除了这种冲突, 最小化同步的消耗, 看起来更适合!
+
+在Lua中使用coroutine完成这样的工作很直接, 也很简单.每当我们创建一个新的task, 它就会被插入到任务列表中, 然后一个简单的任务调度器将不断的迭代这个任务表, 不断的运行每一个任务, 移除那些完成了的任务.
+
+唯一的一个缺点是在使用阻塞操作的时候, 比如调用I/O操作阻塞的时候, 这个时候程序无法主动调用yield, 那么整个进程将发生阻塞直到I/O操作完成, 当然这个也很好解决, 只需要引入一个非阻塞的库即可.
+
+## 4. Coroutines in Programming Language（其它语言的Coroutines)
+
+- 最广为人知的支持协程的语言就是Simula, 而且它还引入了对称协程(semi coroutine), 反正极其复杂~
+- 70年代被广泛使用的BCPL语言(C语言的祖先), 也是一个典型的例子, 和Simula一样, BCPL也支持两种协程.
+- Modula2
+- 最先提出迭代器的是CLU语言, 但是局限性很多. 受到CLU的启发, [sather](http://en.wikipedia.org/wiki/Sather)也实现了迭代器, 但是在当时复杂的想合并二叉树这种应用还是没法解决的.
+- Python和Perl6
+- [Stackless Python](http://www.stackless.com/)
+- [Icon Language](http://www.cs.arizona.edu/icon/)
+
+## 5. 总结
+
+本文主要介绍了Lua语言中的非对称协程, 说明了它的用法.也展示了其它的例如generators、回溯、多任务中的使用, 我们发现这些技术在非对称协程中很容易表达, 其实这并不是巧合, 事实上[partial continuations](http://en.wikipedia.org/wiki/Delimited_continuation)和asymmeric coroutine在很多地方都是相似的.
+
+虽然continuation这一概念表达能力很强, 但是它仍然很难让人理解, 特别是在面向过程的编程中, 而asymmeric coroutine也有着相同的能力, 但是却可以很容易的在面向过程式编程中让人理解.
+
+__最后我们实现一下对称协程__
+
+{% highlight lua %}
+coro = {}
+coro.main = function() end
+coro.current = coro.main
+
+-- create a new coroutine
+function coro.create(f)
+	return coroutine.wrap(function (val)
+			return nil, f(val)
+	end)
+end
+
+-- transfer control to a coroutine
+function coro.trasnfer(k, val)
+	if coro.current ~= coro.main then
+		return coroutine.yield(k, val)
+	else
+		-- dispatching loop(excutes in main program)
+		while k do
+			coro.current = k
+			if k == coro.main then
+				return val
+			end
+			k, val = k(val)
+		end
+		error("coroutine ended without trasnfering control...")
+	end
+end
+{% endhighlight %}
+
+## 6. 参考 & 资料
+- [Roberto(Lua作者之一)公开的一些Lua资料](http://www.inf.puc-rio.br/~roberto/docs/) 重点是这两篇: 1. [Revisiting Coroutines](http://www.inf.puc-rio.br/~roberto/docs/MCC15-04.pdf) 2. [Coroutines in Lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf)
+- [采访 Lua 发明人的一篇文章](http://blog.codingnow.com/2010/06/masterminds_of_programming_7_lua.html)
+- [Continuation](http://en.wikipedia.org/wiki/Continuation)
+- [CSP](http://en.wikipedia.org/wiki/Continuation_passing_style)
+- [Delimited continuation](http://en.wikipedia.org/wiki/Delimited_continuation)
+- [first-class](http://en.wikipedia.org/wiki/First-class_citizen) 本文first-class object翻译应该为第一类对象
+- [the Icon Programming Language](http://www.cs.arizona.edu/icon/)
+- [Python Stackless](http://www.stackless.com/)
+- [Sather Programming Language](http://en.wikipedia.org/wiki/Sather)
+- [Prolog 逻辑编程语言](http://zh.wikipedia.org/zh-cn/Prolog)
+- [Subcontinuations](http://www.cs.indiana.edu/~dyb/pubs/LaSC-7-1-pp83-110.pdf) Subcontinuations在文中出现了多次, 不太理解, 这个是出处
+- [C语言的协程](http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html)
+- [libtask](http://swtch.com/libtask/) 一个协程库, C 语言
+- [libpcl](http://www.xmailserver.org/libpcl.html) 同样的, C语言协程library
+- 关于范型for还是推荐[Programming in Lua: Generic for](http://www.lua.org/pil/7.html)
+

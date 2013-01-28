@@ -1,0 +1,32 @@
+---
+layout: post
+title: "pragma once:避免同一个文件被include多次"
+---
+
+h3. 回想
+
+p. 对于这个问题我们并不陌生, 而且貌似用的很爽.
+
+{% highlight c %}
+#ifndef _VAN9OGH_H
+#define _VAN9OGH_H
+
+// 声明部分
+......
+
+#endif
+{% endhighlight %}
+
+h3. #pragma once
+
+p. 现在有一个新方法， 而且不需要担心"_VAN9OGH_H"会出现冲突
+
+{% highlight c %}
+#pragma once
+
+// 声明部分
+......
+
+{% endhighlight %}
+
+维基上的解释是编译器会比较文件或者i节点而不是调用C的预处理器来扫描头文件， 但是这也带来一个问题， 就是对于符号链接, 他们都指向同一个文件可能就会出现错误.不过貌似问题已经修复了.

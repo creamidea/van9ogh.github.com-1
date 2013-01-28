@@ -1,0 +1,20 @@
+pygments: true
+safe: true
+exclude:
+  LICENSE.md
+  README.md
+  Rakefile
+  CNAME
+  Guardfile
+title: Forest Gump
+domain: forestgump.me
+author:
+  name: Liu Peng
+  email: cow.vangogh@gmail.com
+disqus:
+  shortname: van9ogh
+server: true
+server_port: 4000
+auto: true
+markdown: rdiscount
+permalink: /:year/:month/:title/

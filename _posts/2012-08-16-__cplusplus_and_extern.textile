@@ -1,0 +1,92 @@
+---
+layout: post
+title: "C++中extern \"C\" 使用"
+---
+
+p. 在C++中经常想使用C模块， 或者C++模块中想拿一点到C里面使用，该怎么做呢?我们直接贴代码
+
+h3. 用法
+
+p. 1. C++中使用C
+
+{% highlight cpp %}
+/* c_example.h */
+#ifndef _C_EXAMPLE_H
+#define _C_EXAMPLE_H
+extern int add(int x,int y);
+#endif
+
+/* c_example.c */
+#include "c_example.h"
+int add(int x, int y)
+{
+	return x + y;
+}
+
+// c++实现文件，调用add：cpp_example.cpp
+extern "C" {
+#include "c_example.h"
+}
+int main(int argc, char* argv[])
+{
+	add(2,3);
+	return 0;
+}
+{% endhighlight %}
+
+p. 2.在C中使用C++ 
+(这个就比较简单了， C++代码使用extern "C"声明， C只要extern就OK了)
+
+{% highlight cpp %}
+// C++头文件 cpp_example2.h
+#ifndef _CPP_EXAMPLE_H
+#define _CPP_EXAMPLE_H
+/*或者: extern "C" int add(int x, int y);*/
+extern "C" {
+	int add(int x, int y);
+}
+#endif
+
+// C++实现文件 cpp_example2.cpp
+#include "cpp_example.h"
+int add(int x, int y)
+{
+	return x + y;
+}
+
+// C调用C++ add:c_example2.h
+#ifndef _C_FILE_H
+#define _C_FILE_H
+extern int add(int x, int y);
+#endif
+
+// C调用C++ add:c_example2.c
+#include <stdio.h>
+#include "cFile.h"
+int main(int argc, char* argv[])
+{
+	add( 2, 3 ); 
+	printf("Hello World\n");
+	return 0;
+}
+{% endhighlight %}
+
+h3. 原理
+
+由于C++支持函数的重载， 我们知道它的这种重载是在编译时就确定下来了， 因此C++在编译过程中会对函数名称进行修改，例如我们对cpp_example2.h编译:
+
+{% highlight bash %}
+van9ogh@WSN $ g++ cppExample.cpp -shared -o libcxx.so
+van9ogh@WSN $ objdump -t libcxx.so  | grep add
+0000040c g     F .text  0000000d              add // 这就是编译过后函数的名称
+{% endhighlight %}
+我们看到的是add函数的名称没有发生变化，因为我们加了extern "C", 现在我们将extern "C"注释掉再编译:
+
+
+{% highlight bash %}
+van9ogh@WSN $ g++ cppExample.cpp -shared -o libcxx.so
+van9ogh@WSN $ objdump -t libcxx.so  | grep add
+g     F .text  0000000d              _Z3addii     // 函数名果然发生了变化
+{% endhighlight %}
+
+这很符合常理， C++是对C的扩展， 如果抛弃大量的C代码库， 又怎么会有这么多人为之疯狂， 向Bjarne Stroustrup致敬!

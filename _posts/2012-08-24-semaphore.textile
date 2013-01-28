@@ -1,0 +1,178 @@
+---
+layout: post
+title: "semaphore: XSI和POSIX的比较"
+---
+
+h3. 为什么
+
+p. 笔者最近想写一个线程池无意中发现了相比较于XSI IPC，POSIX也有自己的API接口， 读者可以看一下手册<a href="http://www.kernel.org/doc/man-pages/online/pages/man7/sem_overview.7.html">sem_overview</a> 和 <a href="http://www.kernel.org/doc/man-pages/online/pages/man7/shm_overview.7.html">shm_overview</a>
+
+p. 本文说明并比较XSI和POSIX中关于信号量的API接口。
+
+h3. 信号量
+
+p. 信号量由Djkstra提出, 主要用于处理临界区问题. 可以想象为使用简单的counter变量来显示资源的状态， 当counter大于0时， 说明资源是可访问的， 而当counter小于等于0时， 说明资源正在被使用， 处于busy状态, 于是新的请求只能等待， 直到资源再次可以访问.当然counter本身受到内核的保护， 用户是无法直接访问的， 必须使用操作系统提供给我们的一组API来访问, 于是有了XSI和POSIX两类API.
+
+h3. XSI 信号量
+
+{% highlight c %}
+#include <sys/sem.h>
+int semget(key_t key, int nsems, int semflg);
+int semctl(int semid, int semnum, int cmd, .../* union semun arg */);
+
+// 这两个做PV操作, P: -1, V: +1, 操作 
+// 下面带time的如果在指定时间还得不到资源将返回错误， errno被设置为EAGAIN
+int semop(int semid, struct sembuf *sops, unsigned nsops);
+int semtimedop(int semid, struct sembuf *sops, unsigned nsops,
+		                      struct timespec *timeout);
+{% endhighlight %}
+
+p. XSI信号量以key作为标示符， 而不是使用文件描述符， 对于创建和设置信号量有若干注意点， 这里有一个例子详细描述了如何使用XSI信号量:<a href="/code/c/linux/semaphore-example.c">semaphore-example.c</a>, 但是不要忘记stevens的叮嘱: 尽量避免使用它......
+
+h3. POSIX 信号量
+
+p. 就像管道一样， POSIX semaphore分为命名信号量和匿名信号量， 我们先列出它们的接口:
+
+{% highlight c %}
+#include <semaphore.h>
+
+// 1. 命名信号量
+#include <fcntl.h>
+#include <sys/stat.h>
+
+sem_t *sem_open(const char *name, int oflag);
+sem_t *sem_open(const char *name, int oflag,
+                mode_t mode, unsigned int value);
+int sem_close(sem_t *sem);
+int sem_unlink(const char *name); // 删除命名信号量
+
+
+// 2. 匿名信号量
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+int sem_destroy(sem_t *sem);
+
+
+// 3. 公共部分
+int sem_post(sem_t *sem); // 相当于+1
+int sem_wait(sem_t *sem); // 相当于-1
+int sem_trywait(sem_t *sem);
+int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout);
+int sem_getvalue(sem_t *sem, int *sval); // 拿到sem的值， 放到sval中
+{% endhighlight %}
+
+p. 我们可以看到， 虽然函数貌似变多了， 其实变的简单了， 相比较使用XSI复杂的semctl来操作标示符key, POSIX的每一个接口都是清晰的， 熟悉的， 而且提供了命名的信号量， 这样我们就可以类似与IO多路转换的技术来操作它们了. 
+
+p. 我们来看一个完整的demo: <a href="/code/c/linux/semaphore-example2.c">semaphore-example2.c</a>
+
+{% highlight c %}
+#include <unistd.h>     
+#include <sys/types.h>  
+#include <errno.h>      
+#include <stdio.h>      
+#include <stdlib.h>     
+#include <pthread.h>    
+#include <string.h>     
+#include <semaphore.h>  
+
+sem_t semaphore;
+int counter;
+
+void* th_handler (void *args)
+{
+    int x; 
+    x = *((int *)args);
+    printf("Thread %d: Waiting to enter critical region...\n", x);
+    sem_wait(&semaphore);
+	// 临界区代码
+    printf("Thread %d: Counter Value: %d\n", x, counter);
+    printf("Thread %d: Incrementing Counter...\n", x);
+    counter++;
+    printf("Thread %d: New Counter Value: %d\n", x, counter);
+	// END
+    sem_post(&semaphore);
+    
+    pthread_exit((void *)0);
+}
+
+int main(void)
+{
+    int args[2] = {1, 2};
+    pthread_t thread_a;
+    pthread_t thread_b;
+    
+    sem_init(&semaphore, 0, 1);
+                                 
+    pthread_create (&thread_a, NULL, th_handler, (void *)&args[0]);
+    pthread_create (&thread_b, NULL, th_handler, (void *)&args[1]);
+    
+    pthread_join(thread_a, NULL);
+    pthread_join(thread_b, NULL);
+
+	sem_destroy(&semaphore);
+                  
+    exit(0);
+}
+{% endhighlight %}
+
+p. 这里要说明一下sem_init第二个参数， 如果想让信号量能够被多个进程使用， 我们有两种方案:(前提是第二个参数为非0)
+
+* fork() 这样子进程依然可以拿到semaphore变量的地址
+* shm_open()/semget()等, 让semaphore变量映射到一段共享内存段上， 这样多个进程是可以拿到这个地址的
+
+p. 其实只要拿到semaphore变量的地址， 而且多个进程都可以访问这段地址上的semaphore变量， 就可以让semaphore在多个进程中使用
+
+p. 比如我们看一下使用shmget()做映射的例子:<a href="/code/c/linux/sem-shm.c">sem-shm.c</a>
+
+{% highlight c %}
+#include <unistd.h>     
+#include <sys/types.h>  
+#include <errno.h>      
+#include <stdio.h>      
+#include <stdlib.h>     
+#include <pthread.h>    
+#include <string.h>     
+#include <semaphore.h>  
+#include <sys/shm.h>
+
+int main(void)
+{
+	int shmid;
+	sem_t *semaphore;
+
+	// 创建一个共享存储段
+	shmid = shmget((key_t)1234, sizeof(sem_t), 0666 | IPC_CREAT);
+	if (shmid == -1) {
+		fprintf(stderr, "shmget failed\n");
+		exit(EXIT_SUCCESS);
+	}
+
+	// 拿到共享存储段的首地址， 赋值给semaphore变量
+	semaphore = shmat(shmid, (void *)0, 0);
+	if (semaphore == (void *)-1) {
+		fprintf(stderr, "shmat failed\n");
+		exit(EXIT_SUCCESS);
+	} else {
+		printf("Memory attached at %X\n", (int)semaphore);
+	}
+
+	// 初始化semaphore
+	sem_init(semaphore, 1, 1);
+
+	exit(EXIT_SUCCESS);
+}
+{% endhighlight %}
+
+p. 编译运行后， 我们使用ipcs命令看一下:
+
+{% highlight bash %}
+van9ogh@WSN $ ipcs
+------ Shared Memory Segments --------
+key        shmid      owner      perms      bytes      nattch     status      
+0x000004d2 1766588471 van9ogh    666        16         0              
+{% endhighlight %}
+
+p. 那个key=0x000004d2转化为十进制刚好为1234, 这时， 别的进程就可以拿到这个semaphore了.
+
+h3. 总结
+
+p. 总的来说， 相比较于XSI复杂的接口， 笔者更倾向与POSIX, 这让我想起了Ken Thompson的经典语录:Ken Thompson有一次在被问到——如果他可以重新设计Unix系统，他会做些什么不同的事？而他回答到：“我会把“creat”多拼一个e”， 但是历史不允许这样， 因此有时我在想， 大师们是否在使用其他方式来改进当年的一些设计缺陷呢?

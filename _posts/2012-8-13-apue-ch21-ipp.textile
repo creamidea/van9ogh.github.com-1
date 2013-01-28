@@ -1,0 +1,177 @@
+---
+layout: post
+title: "apue读书笔记:与网络打印机通信"
+category: linux programming
+---
+
+h2. 为什么
+
+<p>最近笔者自己有一个项目: 无线传感器采集与展示， 但苦于没有经验， 不知如何下手，于是在github上找灵感，先是看了hddtemp， webcam，最后找到了apue的最后一章， 才发现这才是我需要的， 正好之前看apue没有看完，刚好用上。对于无线传感器展示服务器端， 我想前端我会实现基于http的服务器， 对于服务器与client之间的通信就使用google protobuf或者json，必要时为了性能，可以仿照ngx使用线程池+异步IO，服务器内部采用两个进程，一个进程用来采集节点的数据并写入数据库，另外一个负责前端以及数据挖掘，当然这两个进程内部可以开多个线程并发.进程之间的通信使用管道或者消息队列。</p>
+
+h2. 关于apue ch21
+
+<p>ipp是Internet Printing Protocol, 它构建在http协议之上, 作者其实写了两个程序print和printd, 客户端和服务器。
+下面是print程序的逻辑:</p>
+
+
+{% highlight text %}
+int main(int argc, char *argv[])
+{
+	检查用户输入
+	连接服务器（printd)
+	if (连接成功)
+		提交文件() {
+			构建文件头部
+			发送header
+			发送file
+		}
+	}
+}
+{% endhighlight %}
+
+<p>printd程序逻辑</p>
+
+{% highlight text %}
+int main(int argc, char *argv[])
+{
+	设置信号屏蔽字(因为要单独开一个线程处理信号)
+	初始化
+	打开服务器(多个地址就打开多个socket fd)
+	创建线程(与打印机通信)
+	创建线程(处理信号)
+	for (;;) {
+		select(.....);
+		foreach fd in fds
+			if (FD_ISSET(fd))
+				client = accept(....)
+				创建线程(处理客户端请求)
+	}
+}
+{% endhighlight %}
+
+<p>程序的逻辑如此简单，关键是如何管理多个客户端线程以及多个提交的文件呢。
+作者使用了两个结构体, 并且定义了一些函数来管理它们， 我们且看:</p>
+
+{% highlight c %}
+// 管理客户端提交的打印文件， print程序只要调用add_job即可
+struct job {
+	struct job      *next;		/* next in list */
+	struct job      *prev;		/* previous in list */
+	long             jobid;		/* job ID */
+	struct printreq  req;		/* copy of print request */
+};
+void update_jobno(void);
+long get_newjobno(void);
+void add_job(struct printreq *, long);
+void replace_job(struct job *);
+void remove_job(struct job *);
+
+// 管理多个客户端线程， 如果遇到情况我们可以采用使线程取消来释放资源
+struct worker_thread {
+	struct worker_thread  *next;	/* next in list */
+	struct worker_thread  *prev;	/* previous in list */
+	pthread_t              tid;		/* thread ID */
+	int                    sockfd;	/* socket */
+};
+void add_worker(pthread_t, int);
+void kill_workers(void);
+{% endhighlight %}
+
+<p>作者使用了互斥量与条件变量， 这个我们是不难理解的，对于job和worker_thread数据结构，它们都是共享资源。</p>
+
+<p>关于客户端线程和与打印机通信的线程它们的实现都是相当的简单的， 基本上属于一问一答的形式</p>
+
+h2. 一些值得注意的地方
+
+* 如何向ipp首部添加选项
+* 如何写一个可靠的异步IO来read数据
+
+<p>属性的格式是这样的:描述属性类型的1字节标志，然后是以2字节的二进制整数形式存储的属性名字的长度，接着是属性名，然后是属性值的长度， 然后是属性值。
+我们看看add_option(...)函数是如何做到的:</p>
+
+{% highlight c %}
+char *
+add_option(char *cp, int tag, char *optname, char *optval)
+{
+	int		n;
+	union {
+		int16_t s;
+		char c[2];
+	}		u;
+	                         // 以下面的函数调用为例, 以下为对应值的变化
+	*cp++ = tag;             // G
+	n = strlen(optname);     // strlen("attributes-charset") = 18
+	u.s = htons(n);          // 18
+	*cp++ = u.c[0];          // 0
+	*cp++ = u.c[1];          // 18
+	strcpy(cp, optname);     // "attributes-charset"
+	cp += n;                 // cp += 18个char
+	n = strlen(optval);      // strlen("utf-8") = 5
+	u.s = htons(n);          // 5
+	*cp++ = u.c[0];          // 0
+	*cp++ = u.c[1];          // 5
+	strcpy(cp, optval);      // "utf-8"
+	return(cp + n);          // cp + (6次++) + 18 + 5 = 28
+}
+{% endhighlight %}
+
+<p>调用:</p>
+
+{% highlight c %}
+#define TAG_CHARSET;          0x47/* 0x47 ASCII为 */
+	char *icp, ibuf[512];
+	memset(ibuf, 0, sizeof(ibuf));
+	int ilen;
+	icp = add_option(icp, TAG_CHARSET, "attributes-charset", "utf-8");
+	ilen = icp - ibuf;
+}
+{% endhighlight %}
+
+<p>作者在32位机器上使用union定义了一个16位int和2个char类型，正好完成了这个工作， 两次都是这么做到的.
+
+<p>第二个主题: 如何写一个可靠的异步IO来read数据</p>
+
+{% highlight c %}
+ssize_t
+tread(int fd, void *buf, size_t nbytes, unsigned int timout)
+{
+	int				nfds;
+	fd_set			readfds;
+	struct timeval	tv;
+
+	tv.tv_sec = timout;
+	tv.tv_usec = 0;
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	nfds = select(fd+1, &readfds, NULL, NULL, &tv);
+	if (nfds <= 0) {
+		if (nfds == 0)
+			errno = ETIME;
+		return(-1);
+	}
+	return(read(fd, buf, nbytes));
+}
+ssize_t
+treadn(int fd, void *buf, size_t nbytes, unsigned int timout)
+{
+	size_t	nleft;
+	ssize_t	nread;
+
+	nleft = nbytes;
+	while (nleft > 0) {
+		if ((nread = tread(fd, buf, nleft, timout)) < 0) {
+			if (nleft == nbytes)
+				return(-1); /* error, return -1 */
+			else
+				break; 
+		} else if (nread == 0) {
+			break;          /* EOF */
+		}
+		nleft -= nread;
+		buf += nread;
+	}
+	return(nbytes - nleft);      /* return >= 0 */
+}
+{% endhighlight %}
+
+<p>如果不去看tinyos c语言串口通信的api，可能我也不会对这个这么敏感，确实在一些低速的设备上我们往往不可能一次性就read我们希望的数据， 但是也不期待程序返回，我想select和重复读组合起来是个很好的解决方案，对此我们需要对read系统调用的返回值情况有一个认识.并且read系统调用如果被信号打断可能是会重启的(errno = EINTR), 也要十分注意。

@@ -1,0 +1,52 @@
+---
+layout: post
+title: "C language:精确初始化结构体的一种新方法"
+---
+
+h3. 以前
+
+p. 大多时候在定义的时候初始化一个结构体我们都是这么做的.
+
+{% highlight c %}
+struct student {
+	char x, y, z;
+	int h;
+	char name[20];
+};
+
+struct student stu = 
+{
+	{
+		'a',
+		'b',
+		'c',
+		10,
+		"LiuPeng"
+	},
+};
+{% endhighlight %}
+
+h3. 现在
+
+p. 现在有一种新方法，我们可以精确初始化某一个部分， 或者跳过一些变量的初始化.
+
+{% highlight c %}
+struct student {
+	char x, y, z;
+	int h;
+	char name[20];
+};
+
+struct student stu = 
+{
+	{
+		.x = 'a',
+		.y = 'b',
+		.z = 'c',
+		.h = 10,
+		.name = "LiuPeng"
+	},
+};
+{% endhighlight %}
+
+p. 就是这样， 惊奇吧!

@@ -1,0 +1,70 @@
+---
+layout: post
+title: HOWTO：Deluge T2(micaz platform)
+---
+
+h3. Quick Start
+
+p. 关于TinyOS Deluge T2最详尽的就是官方tutorials:<a href="http://docs.tinyos.net/tinywiki/index.php/Deluge_T2">Deluge T2</a>按照上面的实践起来还是费了一番周折的， 因此写一个更详细的micaz版本HOWTO作为补充. 希望对大家有用。
+
+<strong>1. 一定要使用CVS上最新的tinyos-2.x版本， 否则有可能会有问题（笔者一开始也是这个问题， 怎么也不行）</strong>
+
+*   a) cd /opt
+*   b) cvs -d:pserver:anonymous@tinyos.cvs.sourceforge.net:/cvsroot/tinyos login //不用输密码， 直接回车
+*   c) sudo cvs -d:pserver:anonymous@tinyos.cvs.sourceforge.net:/cvsroot/tinyos -z3 co -P tinyos-2.x
+
+<strong> 2. 检查pyserial, automake是否安装</strong>
+
+*   a) sudo apt-get install python-serial
+*   b) sudo apt-get install automake
+
+<strong>3. 进入tinyos-2.x 编译deluge t2 python工具</strong>
+
+*   a) cd /opt/tinyos-2.x/tools
+*   b) ./Bootstrap //注意， 如果这一步报错， 那么是你的权限不够
+*   c) ./configure
+*   d) cd /opt/tinyos-2.x/tools/tinyos/misc
+*   e) make
+*   f) sudo make install
+
+<strong> 4. 搭建deluge环境!</strong>
+
+* 1. 编译 tosboot
+**  a) cd tinyos-2.x/tos/lib/tosboot
+**  b) make micaz
+* 2. make 非基站节点(使用GoldenImage)
+**  a) cd /opt/tinyos-2.x/apps/tests/deluge/GoldenImage
+**  b) make micaz install.x mib520,/dev/ttyUSB0 (注意x为非0的值， 且互不相同)
+* 3. make 基站节点
+**  a) cd /opt/tinyos-2.x/apps/tests/deluge/Basestation
+**  b) make micaz install.0 mib520,/dev/ttyUSB0
+
+<strong> 5. Your Application</strong>
+
+* 1. 注意如果希望可以多次烧写非基站节点， 必须加入DelugeC组件, 也就是说DelugeC就是个底层的‘守护程序’， 这样只要刷机后这个守护程序还在， 以后还可以再次刷机
+** a) cd yourApplication Directory
+** b) 加入DelugeC组件
+** c) 修改Makefile, 添加:BOOTLOADER=tosboot
+** d) make micaz
+* 2. 将image注入基站(注意这里的-i 1表示注入基站的1号flash中)
+** a) tos-deluge serial@/dev/ttyUSB1:57600 -i 1 build/micaz/tos_image.xml
+* 3. 让基站分发image并且在分发完成后让非基站节点reprogram(注意单单-d选项只表示注入不会重新烧写)1表示对基站的1号flash分发
+** a) tos-deluge serial@/dev/ttyUSB1:57600 -dr 1
+	
+h3. FAQ
+
+* 1. GoldenImage 是什么?
+** 参看http://www.cs.berkeley.edu/~jwhui/deluge/deluge-manual.pdf， GoldenImage一节， 其实说白了就相当与手机的出场设置一样， 出现问题可以还原出场设置嘛, 因此总是一开始给非基站节点烧写GoldenImage程序
+* 2. TOSBoot 和 Deluge什么关系?
+** 关于TOSBoot专业的回答是这样子的:The TinyOS implementation of the bootloader, TOSBoot, provides the set of mechanisms necessary to program the microcontroller with a stored program image. 读者如果到$TOSROOT/tos/lib/tosboot/micaz下可以发现为什么DelugeC要保证节点电压高于2.7V了(VoltageC.nc).
+** 而Deluge是借助tosboot库来通过网络烧写节点应用程序的工具， 想当与tosboot之上的一层封装， 这样结合pc端的python工具tos-deluge我们就可以使用简单的命令完成复杂的网络烧写任务了.
+* 3. 为什么Led如此诡异(Led灯渐变效果)?
+** 说起这个诡异的Led， 我们可以查看一下源代码(到$TOSROOT/tos/lib/tosboot/lib/LedsC.nc）, 我们发现根本就没有控制电压的迹象， 以下是个人看法， 大家可以一起讨论:
+** 要想控制渐变效果我认为有两种方法， 一种是实打实的， 就是控制电压， 另外一种是欺骗式的， 控制光产生的多少.
+** 我们知道人眼睛观察物体明亮是根据接受到的光的强度来判断的， 那如何让人眼觉得Led有渐变效果呢， 我们只需偷出一点时间让Led产生不了足够的光就可以了， 这个在电子上有一个相关的术语叫占空比， 但是又不能偷出太多， 否则真的就是闪烁而不是渐变了， 读者可以到上面提到的LedsC组件中查看源代码， 就会发现用到了wait函数， 大体上就是这个意思了.
+* 4. 有时候无法使用-e 选项无法erase也无法inject?
+** 出现这个原因主要是卷被锁住了， 可以采取的方法有:(两种都可以）
+*** tos-deluge serial@/dev/ttyUSB1:57600 -s
+*** tos-deluge serial@/dev/ttyUSB1:57600 -ls
+
+p. 我想参照这个HOWTO以及官方文档， Deluge应该是OK了， GoodLuck~

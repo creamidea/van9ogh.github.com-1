@@ -1,0 +1,10 @@
+---
+layout: post
+title: "/dev/random"
+---
+
+p. /dev/random是一个特殊的设备文件，可以用作随机数发生器或伪随机数发生器。它允许程序访问来自设备驱动程序或其它来源的背景噪声。并不是所有操作系统中的/dev/random的实现都是相同的，而Linux是第一个以背景噪声产生真正的随机数的实现。/dev/random的一个副本是/dev/urandom （"unlocked"，非阻塞的随机数发生器）
+
+h2. 参考
+
+* <a href="http://zh.wikipedia.org/wiki//dev/random">wiki</a>

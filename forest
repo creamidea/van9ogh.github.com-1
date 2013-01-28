@@ -1,0 +1,16 @@
+#!/bin/bash
+
+case $1 in 
+	push)
+		git commit -am "$2"
+		git push origin master
+	;;
+	save)
+		git commit -am "$2"
+	;;
+	*)
+		echo "Usage: ./forest [ { push | save } [comment] ]"
+		exit 1
+	;;
+esac
+exit 0

@@ -1,0 +1,76 @@
+---
+layout: post
+title: "typedef: 两个重要用法"
+---
+
+h3. 用法
+
+p. typedef基本的用法就不说了，我们来看不常用的:
+
+
+h4. 定义函数指针类型
+
+p. 这个挺有用的， 回想signal函数声明， 作者的目的是想让signal函数返回一个void (*)(int)指针,也就是保存上一次signal调用时绑定的信号处理函数， 一般情况下我们很想这么做:
+
+{% highlight c %}
+void (*)(int) signal(int signo, void (*func)(int))
+{
+	// signal 函数的实现
+}
+{% endhighlight %}
+
+p. 但编译器通常会说括号错误.那我们怎么解决呢?
+
+p. 这个时候我们有两种解决方案:
+
+{% highlight c %}
+<pre name="code" class="Cpp">
+void (* signal(int signo, void(*func)(int)))(int)
+{
+	// signal 函数的实现
+}
+{% endhighlight %}
+
+p. 也就是将signal放到里面， 不过会让我们更迷惑， 觉得这个不像函数的定义， 那我们不妨这样:
+
+
+{% highlight c %}
+typedef void (*MyFunc)(int);
+MyFunc signal(int signo, MyFunc func)
+{
+	// signal 函数的实现
+}
+{% endhighlight %}
+
+p. 我们不但将返回值一并替换了， 还将参数2也替换了， 反正他们是一样的， 这样看起来简洁多啦.
+
+
+h4. 声明函数类型
+
+p. 只需要将表示指针的*去掉即可， 那么这个时候我们使用时， 就是在声明一个函数而不是函数指针变量， 因此还需要实现它.
+
+{% highlight c %}
+typedef int MyFunc(int, int);
+MyFunc myfunc;
+
+// 实现
+int myfunc(int x, int y)
+{
+	....
+}
+{% endhighlight %}
+
+p. 之前一直有一个问题缠绕着我， 在apue ch4.21有一个myftw用来递归遍历目录下所有文件的程序，它的typedef很奇怪.现在看来已经很明确了.
+
+{% highlight c %}
+typedef int Myfunc(const char *, const struct stat *, int);
+static Myfunc myfunc; // 这是声明
+static int myftw(char *, Myfunc *); // 这里的Myfunc *是函数指针
+static int dopath(Myfunc *); // 同样是函数指针
+
+// 后面实现了函数myfunc
+static int myfunc(const char *pathname, const struct stat *statptr, int type)
+{
+	.......
+}
+{% endhighlight %}

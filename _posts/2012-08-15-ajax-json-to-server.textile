@@ -1,0 +1,77 @@
+---
+layout: post
+title: "将JSON发往http server"
+---
+
+p. 这个是供需双方都迫不及待的事情， 我们看一下代码是如何解决的，但这段代码没有解决XMLHttpRequest在IE上的兼容性，我们暂且放在一边.
+
+{% highlight javascript %}
+/* 注意， 这个js库可以到github上下载到 */
+<script src="./json.js" type="text/javascript"></script>
+<script language="javascript" type="text/javascript">
+var people =  { 
+	"programmers": [    
+						{ "firstName": "Brett", 
+						  "lastName":"McLaughlin",
+						  "email": "brett@newInstance.com" 
+	                    },    
+	                    { "firstName": "Jason", 
+						  "lastName":"Hunter",
+                          "email": "jason@servlets.com" 
+						}    
+	        ],  
+	"musicians": [    
+	                    { "firstName": "Tad", 
+                          "lastName": "Williams", 
+						  "genre": "fantasy" 
+						},    
+						{ "firstName": "Frank", 
+                          "lastName": "Peretti", 
+						  "genre": "christian fiction" 
+						}   
+			]  
+}
+// XMLHttpRequest 属性和方法
+/*	open()：建立到服务器的新请求。
+	send()：向服务器发送请求。
+	abort()：退出当前请求。
+	readyState：提供当前 HTML 的就绪状态。
+	responseText：服务器返回的请求响应文本。
+ */
+var xmlHttp = false;
+if (!xmlHttp && typeof XMLHttpRequest != 'undefined') {
+  xmlHttp = new XMLHttpRequest();
+}
+/* 将people转化为JSON字符串 */
+var people_string = JSON.stringify(people);  
+/* 我们使用POST方法, 其中url内容意思是在7890端口开了一个测试，打印数据 */
+xmlHttp.open("POST", "http://localhost:7890", true);
+xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+xmlHttp.send(people_string);
+</script>
+{% endhighlight %}
+
+p. 我们察看一下服务器端接收到的数据是什么样子的:
+
+{% highlight text %}
+POST / HTTP/1.1
+Host: localhost:7890
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:14.0) Gecko/20100101 Firefox/14.0.1 FirePHP/0.7.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+Referer: http://localhost/test/
+Content-Length: 311
+Origin: http://localhost
+x-insight: activate
+Pragma: no-cache
+Cache-Control: no-cache
+
+{"programmers":[{"firstName":"Brett","lastName":"McLaughlin","email":"brett@newInstance.com"},{"firstName":"Jason","lastName":"Hunter","email":"jason@servlets.com"}],"musicians":[{"firstName":"Tad","lastName":"Williams","genre":"fantasy"},{"firstName":"Frank","lastName":"Peretti","genre":"christian fiction"}]}
+{% endhighlight %}
+
+h2. 参考
+
+* <a href="http://www.ibm.com/developerworks/cn/web/wa-ajaxintro/">IBM Ajax 系列文章</a>

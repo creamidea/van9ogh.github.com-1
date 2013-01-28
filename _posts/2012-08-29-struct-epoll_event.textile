@@ -1,0 +1,37 @@
+---
+layout: post
+title: "神一般的错误: typedef union epoll_data {...}"
+---
+
+p. 休息之余说一下刚遇到的一个大BUG...， 检查了好几天了， 就是不知道为何n = epoll_wait()返回的n > 0, 但是检查events中的fd却是0， 而我根本没有将0加入到epoll中啊....最终发现原来是union的原因:
+
+{% highlight c %}
+	struct epoll_event event;
+	memset(&event, 0, sizeof(struct epoll_event));
+
+	// 这个fd是函数参数传进来的
+	event.data.fd = fd;
+
+	// 这个就是那个错误
+	event.data.ptr = NULL;
+
+	event.events |= EPOLLET | EPOLLRDHUP; // 使用边沿触发, 并且监视客户端关闭事件
+
+	epoll_ctl(re->epoll_fd, EPOLL_CTL_ADD, fd, &event);
+{% endhighlight %}
+
+p. 原来struct epoll_event结构体中的data是一个union类型, 因此我自作主张的给那个指针初始化却覆盖了fd的值.
+
+{% highlight c %}
+	   typedef union epoll_data {
+		   void        *ptr;
+		   int          fd;
+		   uint32_t     u32;
+		   uint64_t     u64;
+	   } epoll_data_t;
+
+	   struct epoll_event {
+		   uint32_t     events;      /* Epoll events */
+		   epoll_data_t data;        /* User data variable */
+	   };
+{% endhighlight %}

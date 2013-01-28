@@ -1,0 +1,98 @@
+---
+layout: post
+title: "linux下有趣的命令"
+---
+
+h3. cal 9 1952
+
+p. 记得第一次接触linux时候， 是上的公开课， 老师问了这个问题:<a href="http://en.wikipedia.org/wiki/Cal_(Unix)#Features">1752年9月发生了什么?</a>
+
+{% highlight bash %}
+van9ogh@WSN $ cal 9 1752
+   September 1752     
+Su Mo Tu We Th Fr Sa  
+       1  2 14 15 16  
+17 18 19 20 21 22 23  
+24 25 26 27 28 29 30
+{% endhighlight %}
+
+
+h3. apt-build moo
+
+{% highlight bash %}
+van9ogh@WSN $ apt-build moo
+         (__)    ~
+         (oo)   /
+     _____\/___/
+    /  /\ / /
+   ~  /  * /
+     / ___/
+*----/\
+    /  \
+   /   /
+  ~    ~
+..."Have you danced today? Discow!"...
+{% endhighlight %}
+
+h3. banner
+
+p. 表示以后写控制台程序， 在也不用vi画图了....
+
+{% highlight bash %}
+van9ogh@WSN $ banner "van9ogh"
+                         #####
+ #    #    ##    #    # #     #   ####    ####   #    #
+ #    #   #  #   ##   # #     #  #    #  #    #  #    #
+ #    #  #    #  # #  #  ######  #    #  #       ######
+ #    #  ######  #  # #       #  #    #  #  ###  #    #
+  #  #   #    #  #   ## #     #  #    #  #    #  #    #
+   ##    #    #  #    #  #####    ####    ####   #    #
+{% endhighlight %}
+
+h3. apt-get moo
+
+{% highlight bash %}
+van9ogh@WSN $ apt-get moo
+         (__) 
+         (oo) 
+   /------\/ 
+  / |    ||   
+ *  /\---/\ 
+    ~~   ~~   
+...."Have you mooed today?"...
+{% endhighlight %}
+
+
+h3. sl
+
+<img src="/images/sl2.png" style="width:500px;height:260px;border:solid 9px #e3e3e3;" />
+
+
+h3. cowsay/cowthink
+
+{% highlight bash %}
+van9ogh@WSN $ cowthink "Hello van9ogh"
+ _______________
+( Hello van9ogh )
+ ---------------
+        o   ^__^
+         o  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+{% endhighlight %}
+
+
+h3. fortune (这个需要安装fortune-zh, 否则是英文)
+
+p. 作为banner很好玩啊， 还能学古诗....
+
+{% highlight bash %}
+van9ogh@WSN $ fortune 
+《登金陵凤凰台》
+作者：李白
+凤凰台上凤凰游，凤去台空江自流。
+吴宫花草埋幽径，晋代衣冠成古丘。
+三山半落青天外，二水中分白鹭洲。
+总为浮云能蔽日，长安不见使人愁。
+{% endhighlight %}

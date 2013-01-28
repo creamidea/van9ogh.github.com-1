@@ -1,0 +1,59 @@
+---
+layout: post
+title: "setsockopt优化网络性能:两个重要参数"
+---
+
+h3. 原型
+
+{% highlight c %}
+#include <sys/socket.h>
+
+int setsockopt(int sockfd, int level, int option, const void *val,
+		socklen_t len);
+{% endhighlight %}
+
+p. 关于setsockopt具体参数使用方法请直接参考<a href="http://linux.die.net/man/2/setsockopt">manpage</a>, 这里说明两个option选项: TCP_NODELAY, TCP_CORK, 这两个用来控制包的"Nagle化", Nagle指的是<a href="http://en.wikipedia.org/wiki/Nagle's_algorithm">Nagle's algorithm</a>, 它将较小的包组装成更大的帧， 减少了网络中包头远远大于数据的情况， 以此来降低网络拥塞。但是有些情况下我们不想这样， 比如说对用户交互实时性要求高的场合，又比如说传输大文件的场合。
+
+h4. 实时性
+
+p. 显然这个时候数据不应该由Nagle接管， 我们直接设置:
+
+{% highlight c %}
+int client_fd;
+int on = 1;
+
+setsockopt(client_fd, SOL_TCP, TCP_NODELAY, &on, sizeof(on));
+{% endhighlight %}
+
+p. 这样即使是1byte的数据也会立刻send出去
+
+h4. 大文件
+
+p. 如果我们需要传输大文件， 我们可以使用TCP_CORK, 它就像一个塞子， 我先把管道塞住， 等到数据被填满然后，再拔去塞子，这样一起发送多个数据集合， 在这些数据之间不存在延迟， 可以提高性能. 实际上我们是觉得Nagle algorithm算法对我们来说还不是足够好， 因此我们来点更变态的.
+
+{% highlight c %}
+int client_fd;
+int on = 1;
+
+setsockopt(client_fd, SOL_TCP, TCP_CORK, &on, sizeof(on)); //塞住
+
+write(client_fd, ...);
+write(client_fd, ...);
+write(client_fd, ...);
+write(client_fd, ...);
+on = 0;
+
+setsockopt(client_fd, SOL_TCP, TCP_CORK, &on, sizeof(on)); // 拔去塞子
+{% endhighlight %}
+
+p. 这两个参数都是通过取消Nagle algorithm来适应特殊情况， 但它们是本身是两个相反的方向.实际上使用这两个参数完全根据自己的情况， 以上两种情况只是举例， 使之更形象而已。
+
+h4. Appendix
+
+* 1. 注意TCP_CORK只在linux 2.4内核以后使用
+* 2. 其实setsockopt我们还用的一个参数是SO_REUSEADDR, 也非常棒!这样可以避免服务器再出现烦人的bind:address already in use.
+
+h3. 参考
+
+* <a href="http://en.wikipedia.org/wiki/Nagle's_algorithm">wiki</a>
+* <a href="http://baus.net/on-tcp_cork">TCP_CORK: More than you ever wanted to know</a>

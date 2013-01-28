@@ -1,0 +1,169 @@
+---
+layout: post
+title: "细说tinyos PrintfC"
+category: tinyos
+---
+
+p. 关于PrintfC的一些基本使用方法请直接访问<a href="http://docs.tinyos.net/tinywiki/index.php/The_TinyOS_printf_Library">tinyos tutorials Printf Library</a>, 本文给出的是tinyos底层的一些实现.
+
+h2. Prepare
+
+参考的目录如下:
+* $TOSROOT/tos/lib/printf/
+* $TOSROOT/tos/system
+* $TOSROOT/apps/tutorials/Printf
+
+h2. 问题回顾
+
+p. 平常我们使用PrinftC组件都是只需要记住包含的组件:PrinftC, SerialStartC, 注意包含都文件printf.h就差不多了，必要的时候再使用printfflush进行缓冲刷新，会用就行了。但是PrintfC本身底层是怎么刷新的呢?我们先将目录[3]下的TestPrintfC.nc fired事件调用printf的部分修改一下:
+
+TestPrintfC.nc
+
+{% highlight c %}
+//将四句printf注释掉，只添加一句
+event void Timer.fired() {
+		printf("x");
+  //	printf("Hi I am writing to you from my TinyOS application!!\n");
+  //	printf("Here is a uint8: %u\n", dummyVar1);
+  //	printf("Here is a uint16: %u\n", dummyVar2);
+  //	printf("Here is a uint32: %ld\n", dummyVar3);
+  //	printfflush();
+  }
+{% endhighlight %}
+
+p. Makefile再添加一句:
+//设置缓冲区大小为10
+
+{% highlight c %}
+CFLAGS += -DPRINTF_BUFFER_SIZE=10
+{% endhighlight %}
+
+p. 编译运行后我们发现x是每6个为一组打印的， 但是我们设置的缓冲区大小为10啊， 在目录[1]下我们发现了printf的源代码
+
+generic-printf.h
+
+{% highlight c %}
+#define printf _printf
+extern int lowlevel_putc(int c); 
+
+
+/* 打印一个字符， 调用lowlevel_putc(c) */
+int
+_putchar(int c)
+{     
+  /* Convert CR to CR/LF */
+  if (c == '\n')
+    lowlevel_putc('\r');
+  lowlevel_putc(c);
+
+  return c;
+}
+
+
+/* 之所以要列出_puts是想说明对于\0是不会打印的 */
+int
+_puts(const char *s)
+{
+  while( *s != '\0' )
+    _putchar(*s++);
+
+  return 0;
+}
+
+
+// printf太长了， 我们写一下程序的逻辑
+// 对于参数化列表请参考[1], 主要是几个变量 va_list, va_start, va_end，va_arg
+int _printf(const char *format, ...)
+{
+
+   va_list ap;
+   va_start(ap, format);
+
+   while(*format) {
+	   if (*format == "%")
+		//	分别处理%f %d %c %s %l %u 一系列的格式的打印;
+
+	   _putchar(*format++);
+   }
+   va_end(ap);
+   return cntr_val;
+}
+{% endhighlight %}
+
+p. 我们可以看到调用关系为 printf-> putchar->lowlevel_putc() 
+我们继续追踪, 寻找lowlevel_putc,发现在PutcharP.nc中找到了它的足迹:
+
+{% highlight c %}
+module PutcharP {
+  provides interface Init;
+  uses interface Putchar;
+} implementation {
+
+// 省略了其他实现
+int lowlevel_putc(int c) __attribute__((noinline)) @C() @spontaneous() {
+	return call Putchar.putchar (c);
+}
+{% endhighlight %}
+
+p. 继续追踪， 发现有两个组件提供putchar commnad, SerialPrintfP 和 PrintfP
+
+{% highlight c %}
+// PrintfP.nc 实现
+#undef putchar
+  command int Putchar.putchar (int c)
+  {
+    if((state == S_STARTED) && (call Queue.size() >= ((PRINTF_BUFFER_SIZE)/2))) {
+      state = S_FLUSHING;
+      sendNext();
+    } 
+    atomic {
+      if(call Queue.enqueue(c) == SUCCESS)
+        return 0;
+      else return -1;
+    }
+  }
+
+// SerialPrintfP.nc 实现
+#undef putchar
+  command int Putchar.putchar (int c)
+  {
+    return (SUCCESS == call UartByte.send(c)) ? c : -1;
+  }
+{% endhighlight %}
+
+p. 我们发现PrintfP提供的是带有队列的putchar， 每次执行putchar都是先将字符送入队列， 并且当队列的大小超过队列总长度的一半时， 我们开始进行”FLUSH“, 而另外一个则直接调用send， 发往串口， 因此这里就不难理解前面的现象了， :)
+在结束的时候我们再看一下队列的定义:
+
+
+{% highlight c %}
+// 在PrintfC.nc中
+#include "printf.h"
+
+configuration PrintfC {
+}
+implementation {
+  // .....
+  components new PrintfQueueC(uint8_t, PRINTF_BUFFER_SIZE) as QueueC;
+  PrintfP.Queue -> QueueC;
+}
+
+
+// include.h
+#ifndef PRINTF_BUFFER_SIZE
+#define PRINTF_BUFFER_SIZE 250 
+#endif
+
+#if PRINTF_BUFFER_SIZE > 255
+#define PrintfQueueC	BigQueueC
+#define PrintfQueue	    BigQueue
+#else
+#define PrintfQueueC	QueueC
+#define PrintfQueue	    Queue
+#endif
+{% endhighlight %}
+
+p. 作者对队列的选用进行了编译时动态选择， 很细腻的手法啊!
+
+
+h2. 参考
+* <a href="http://blog.csdn.net/hackbuteer1/article/details/7558979">C 语言的可变参数表函数的设计</a>

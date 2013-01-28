@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>JavaScript入门经典读书笔记 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/12/Beginning-JavaScript-3rd-edition/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+  <div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>JavaScript入门经典读书笔记</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Monday, 31 December 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>javascript</li>
+        
+          <li>DOM</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>最近刚好在迁移博客, 想解决博客的全文搜索问题, 当然最好是用JS来做啦, 况且我已经发现了使用JQuery做的demo, 于是翻来Beginning JavaScript, 了解一下, 其实一直想了解一下这门活在浏览器中的唯一语言, 它是怎么样和HTML, CSS结合起来, 将Web变得如此强大的.</p>
+
+<h3>P0-173</h3>
+
+<p>前面写的很好, 读的很快.基本上讲了基本的程序结构:循环、分支、顺序, 又提到了若干JS内置对象:Array, String, Data, Number, Math, 以及浏览器的文档对象模型DOM: window, history, location, navigator, screen, document.</p>
+
+<h3>P173</h3>
+
+<p>浏览器页面上每一个img对象都保存在images[]数组中, 对于页面上的第一副图片, 用数组document.images[0]表示, 以此类推.img对象的属性就包括src、id等等属性, 这样就将HTML标记语言中的属性和JS对象很好的结合在了一起!</p>
+
+<h3>P248</h3>
+
+<p>使用<frameset>来定义框架集, 使用<frame>来标记框架, 对于一个不包含框架的页面来说, 仅存在有一个window对象, 但对于包含框架集页面来说, 页面的每一个框架都具有一个相应的window对象.除了包含框架集的顶层窗口的window对象之外, 每一个框架的window对象都是其父框架的window对象的子对象.我想似乎可以利用这一点做一个dummy框架集, 隐藏起来, 帮我们记录一些信息.</p>
+
+<h3>P268</h3>
+
+<p>window对象的open()方法用来打开一个新的tab, 还可以返回这个新的tab的window对象引用, 关闭这个tab我们可以使用close()方法</p>
+
+<h3>P275</h3>
+
+<p>这一节讲到了一个重要的方法, 用于在打开一个新窗口以后, 新窗口和老窗口之间的通信.</p>
+
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+        
+</div>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/12/tinyos-sensorboards-mts300cb-magx/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/12/markdown/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+  </div>
+  <footer>
+    Site last generated: 2013-01-28T16:34:33+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>
