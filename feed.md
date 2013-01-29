@@ -7,8 +7,8 @@
   >
   <channel>
     <title>{{ site.author }}</title>
-    <link href="{{ site.url }}/feed/" rel="self" />
-    <link href="http://van9ogh.github.com/" />
+    <link href="{{ site.url }}/feed.html" rel="self" />
+    <link href="http://forestgump.me/" />
     <lastBuildDate>{{ site.time | date_to_xmlschema }}</lastBuildDate>
     <webMaster>cow(dot)vangogh(alt)gmail(dot)com</webMaster>
     {% for post in site.posts limit:10 %}
