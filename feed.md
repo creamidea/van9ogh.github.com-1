@@ -7,7 +7,7 @@ title: "Feed 订阅"
 
 ![Feed Boy and Girl](/images/rss-boy-girl.jpg)
 
-- [http://forestgump.me/feed1](http://forestgump.me/feed1) 
-(使用Google feedburner, 有时会被墙)
-- [http://forestgump.me/feed2](http://forestgump.me/feed2) 
+- [http://feeds.feedburner.com/forest9ump](http://feeds.feedburner.com/forest9ump) 
+(使用Google feedburner, 有时会被墙, 建议使用)
+- [http://forestgump.me/atomic.xml](http://forestgump.me/atomic.xml) 
 (备用, 正常使用)
