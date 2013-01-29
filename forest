@@ -2,7 +2,9 @@
 
 case $1 in 
 	push)
-		git commit -am "$2"
+		git add .
+		git add -A .
+		git commit -m "$2"
 		git push origin master
 	;;
 	save)

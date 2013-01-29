@@ -6,7 +6,7 @@ $.ajax({
     jsonpCallback: "xkcddata",
     success: function(data) {
         $("#xkcdcontent").append(
-   //         $("<h1/>").text(data.title),
+            $('<h3/>').text("<<" + data.title + ">>"),
             $("<img/>").attr({
                 src: data.img,
                 title: data.alt,
