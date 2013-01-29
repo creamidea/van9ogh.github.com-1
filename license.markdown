@@ -29,7 +29,7 @@ All other directories and files as well as any source code snippets that may
 appear as part of posts in the \_posts directory mentioned above are 
 released under an MIT license. See below for details:
 
-> Copyright (C) 2012 by Matthew Scharley
+> Copyright (C) 2012 by Liu Peng
 > 
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
@@ -49,5 +49,5 @@ released under an MIT license. See below for details:
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 > THE SOFTWARE.
 
-  [github-source]: http://github.com/mscharley/mscharley.github.com
+  [github-source]: http://github.com/van9ogh/van9ogh.github.com
   [cc-license]: http://creativecommons.org/licenses/by-nc-sa/3.0/au/

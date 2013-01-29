@@ -1,25 +1,13 @@
 ---
+layout: page-plus-comment
+title: "Feed 订阅"
 ---
-<?xml version="1.0" encoding="utf-8"?>
-  <rss version="2.0"
-        xmlns:content="http://purl.org/rss/1.0/modules/content/"
-        xmlns:atom="http://www.w3.org/2005/Atom"
-  >
-  <channel>
-    <title>{{ site.author }}</title>
-    <link href="{{ site.url }}/feed.html" rel="self" />
-    <link href="http://forestgump.me/" />
-    <lastBuildDate>{{ site.time | date_to_xmlschema }}</lastBuildDate>
-    <webMaster>cow(dot)vangogh(alt)gmail(dot)com</webMaster>
-    {% for post in site.posts limit:10 %}
-    <item>
-      <title>{{ post.title | xml_escape }}</title>
-      <link href="{{ site.url }}{{ post.url }}"/>
-      <pubDate>{{ post.date | date_to_xmlschema }}</pubDate>
-      <author>{{ site.author }}</author>
-      <guid>{{ site.url }}{{ post.id }}</guid>
-      <content:encoded><![CDATA[{{ post.content }}]]></content:encoded>
-    </item>
-    {% endfor %}
-  </channel>
-</rss>
+
+欢迎订阅我的Blog, 您可以及时跟踪我的更新:
+
+![Feed Boy and Girl](/images/rss-boy-girl.jpg)
+
+- [http://forestgump.me/feed1](http://forestgump.me/feed1) 
+(使用Google feedburner, 有时会被墙)
+- [http://forestgump.me/feed2](http://forestgump.me/feed2) 
+(备用, 正常使用)
