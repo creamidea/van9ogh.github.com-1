@@ -26,3 +26,11 @@ Hi, My Name is Liu Peng, You can <strong>find me</strong> as folows:
    - software: TinyOS/nesC, uc/OS2, ucLinux, Linux, Contiki
  - wireless sensor network
    - Viz: [tinyos-graphics](https://github.com/van9ogh/tinyos-graphics)
+
+### 最新的xkcd漫画
+
+<div id="xkcdcontent" style="text-align: center"></div>
+
+{% include xkcdcomic.html %}
+
+{% include disqus.html %}
