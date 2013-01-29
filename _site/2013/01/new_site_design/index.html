@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>Valgrind: 发现 Memory Leak | Forest Gump</title>
+  <title>设计网站新样式 | Forest Gump</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link type="text/css" rel="stylesheet" href="/css/style.css">
@@ -11,7 +11,7 @@
 
 
   <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
-  <link rel="canonical" href="http://forestgump.me/2012/09/valgrind/">
+  <link rel="canonical" href="http://forestgump.me/2013/01/new_site_design/">
 
   <!--[if lt IE 9]>
   <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
@@ -59,7 +59,7 @@
       <article id="main" class="post">
   <header>
     <hgroup>
-      <h1>Valgrind: 发现 Memory Leak</h1>
+      <h1>设计网站新样式</h1>
       
     </hgroup>
     <p class="posted-time">
@@ -71,7 +71,7 @@
       </span>
       at
       <span class="date">
-        Monday, 03 September 2012 - 00:00
+        Monday, 28 January 2013 - 00:00
       </span>
     </p>
     
@@ -80,91 +80,46 @@
 	<!-- 判断tags是否存在, 如果存在才显示tags -->
     <nav class="tags">
 	
+	  <strong>Tags:</strong> 
+	
 	  <ul>
+        
+          <li>css</li>
+        
+          <li>web</li>
+        
+          <li>design</li>
         
       </ul>
     </nav>
   </header>
 
-  <p>推荐一款工具， valgrind, 它是Linux下一个的仿真调试工具的集合， 包含以下工具模块:</p>
+  <p>第三次设计这个静态Blog了, 参考了大量的Blog设计, 借鉴了一些js代码和CSS样式, 好吧, 我承认, 这些其实不怎么受我控制. 虽然已经有很好的框架比如<a href="http://twitter.github.com/bootstrap/">bootstrap</a>, 甚至还有<a href="http://fortawesome.github.com/Font-Awesome/">font-awesome</a>这样精美的iconic font, 以及JQuery. 不过比起之前那个窄窄的design, 已经很满意了.特别要鸣谢我的战友: icecream帮我实现了在<a href="/about.html">about</a>页面显示<code>最新xkcd漫画</code>的想法.</p>
 
-<p><img src="http://valgrind.org/images/valgrind-100.png" width="335" height="97" alt="Valgrind logo" title="Valgrind logo" border="0" /></p>
-
-<blockquote><ul>
-<li>Memcheck   这是valgrind应用最广泛的工具，一个重量级的内存检查器，能够发现开发中绝大多数内存错误使用情况。</li>
-<li>Callgrind  主要用来检查程序中函数调用过程中出现的问题。</li>
-<li>Cachegrind 主要用来检查程序中缓存使用出现的问题。</li>
-<li>Helgrind   主要用来检查多线程程序中出现的竞争问题。</li>
-<li>Massif     主要用来检查程序中堆栈使用中出现的问题。</li>
-<li>Extension  可以利用core提供的功能，自己编写特定的内存调试工具。</li>
-</ul>
-</blockquote>
-
-<p>功能很多， 读者可以查询一下其他模块的使用方法， 下面我们看一看如何检测内存泄露</p>
-
-<h3>如何检测内存错误</h3>
-
-<div class="highlight"><pre><code class="bash">van9ogh@WSN <span class="nv">$ </span>valgrind --tool<span class="o">=</span>memcheck --leak-check<span class="o">=</span>full --show-reachable<span class="o">=</span>yes ./TOSEngine 8080 // 后面跟要运行的程序, 注意程序为一行， 这里javascript换行有点问题
-</code></pre></div>
-
-
-<h4>输出</h4>
-
-<div class="highlight"><pre><code class="text">....... // 省略一些输出， 列出最需要的数据
-
-==4685== HEAP SUMMARY:
-==4685==     in use at exit: 12,000 bytes in 1 blocks
-==4685==   total heap usage: 1 allocs, 0 frees, 12,000 bytes allocated
-==4685== 
-==4685== LEAK SUMMARY:
-==4685==    definitely lost: 0 bytes in 0 blocks
-==4685==    indirectly lost: 0 bytes in 0 blocks
-==4685==      possibly lost: 0 bytes in 0 blocks
-==4685==    still reachable: 12,000 bytes in 1 blocks
-==4685==         suppressed: 0 bytes in 0 blocks
-==4685== Reachable blocks (those to which a pointer was found) are not shown.
-==4685== To see them, rerun with: --leak-check=full --show-reachable=yes
-==4685== 
-==4685== For counts of detected and suppressed errors, rerun with: -v
-==4685== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-</code></pre></div>
-
-
-<p>可以看出我这个程序至少在内存管理方面是没有错误的:)</p>
-
-<h3>参数</h3>
-
-<p>更详细的参数请直接前往<a href="http://linux.die.net/man/1/valgrind">man page</a>, 这里列出一些常见的.</p>
-
-<blockquote><ul>
-<li>1、leak-check
-  --leak-check=&lt;no|summary|yes|full> [default: summary]
-  用于控制内存泄漏检测力度。
-  no，不检测内存泄漏；
-  summary，仅报告总共泄漏的数量，不报告具体泄漏位置；
-  yes/full，报告泄漏总数、泄漏的具体位置。</li>
-<li>2、show-reachable
-  --show-reachable=&lt;yes|no> [default: no]
-  用于控制是否检测控制范围之外的泄漏，比如全局指针、static指针等。</li>
-<li>3、undef-value-errors
-  --undef-value-errors=&lt;yes|no> [default: yes]
-  用于控制是否检测代码中使用未初始化变量的情况。</li>
-<li>4、其他选项
-  --log-file=filename 将结果输出到文件。
-  --log-socket=127.0.0.1:8901 输出到网络。</li>
-</ul>
-</blockquote>
-
-<h3>参考</h3>
+<p>有两点我认为应该写入TODO的:</p>
 
 <ul>
-<li><a href="http://www.ibm.com/developerworks/cn/linux/l-cn-valgrind/">应用 Valgrind 发现 Linux 程序的内存问题</a></li>
-<li><a href="http://www.valgrind.org/docs/manual/quick-start.html">The Valgrind Quick Start Guide</a></li>
-<li><a href="http://valgrind.org/info/about.html">About Valgrind</a></li>
+<li>图片服务和代码服务</li>
 </ul>
 
 
-<p>Good Luck~</p>
+<p>将图片保存在网站根目录的/images下实在不怎么高明, 因为基本上很难找到这张图片, 搜索将是一个麻烦事, 我们需要的其实是一个托管的图片服务, 解决方案其一是采用<a href="http://www.flickr.com/">flickr</a>这样的图片服务, 但是由于GFW, 我们又很担心被墙之后, 糟糕的页面.其二是用Worepress强大的插件, 搭建一个图片服务, 但是目前迫于经济, 没有现成的VPS, 而Appfog类似免费的PaaS我还没有去尝试, 但我认为是可以的.</p>
+
+<p>代码服务, 除了使用jekyll自带的pygments, 我想以后还会用gist保存, 就像这样:</p>
+
+<script src="https://gist.github.com/4654821.js"></script>
+
+
+<ul>
+<li>建立目录索引</li>
+</ul>
+
+
+<p>大家可能认为这个问题很简单, 但其实在jekyll中是要自己实现一个插件, 使得在编译时能够生成每一个分类对应的信息, 否则就只能生成一个页面而不能每一个分类对应一个页面.这个事情, Jekyll中的Liquid和YAML都帮不上忙, 只能用Ruby修改Jekyll核心, 目前还没有这个打算.其实还是很羡慕Worldpress的插件的.貌似在<a href="http://octopress.org/">octopress</a>上这个已经不是问题了, 但目前还没有打算迁移.</p>
+
+<p>除此之外, 别无所求, 我希望Blog尽可能简单, 主要用来记载一些读书笔记以及一些随想, 用来做总结之用, 我知道在没有量的基础上添加这些功能其实都是花哨的, 很多问题其实是大数据量的问题, 因此只有在文章量上去之后, 再重新设计解决.</p>
+
+<p>因此总的来说还是满意的, 这部分工作要放一放了, 今天读了阮一峰<a href="http://www.ruanyifeng.com/blog/2011/05/900-month_lifespan.html">人生只有900个月</a>中的照片感触也挺深的, 时间确实耗费不起, 接下来要去学习开关电源和PCB制版了, GoodLuck~</p>
 
 
   <footer>
@@ -193,13 +148,11 @@ $(function(){
     var url = false;
         if (e.which == 37 || e.which == 74) {  // Left arrow and J
             
-        url = '/2012/08/struct-epoll_event/';
+        url = '/2013/01/new-domain/';
         
         }
         else if (e.which == 39 || e.which == 75) {  // Right arrow and K
             
-        url = '/2012/09/char-decode-encode/';
-        
         }
         if (url) {
             window.location = url;
