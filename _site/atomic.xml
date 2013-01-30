@@ -3,13 +3,36 @@
   <title>Forest Gump</title>
   <link href="http://forestgump.me/"/>
   <link href="http://forestgump.me/atom.xml" rel="self"/>
-  <updated>2013-01-29T20:32:42+08:00</updated>
+  <updated>2013-01-30T13:07:57+08:00</updated>
   <id>http://forestgump.me/</id>
   <author>
     <name>Liu Peng</name>
     <email>cow.vangogh@gmail.com</email>
   </author>
 
+  
+  <entry>
+    <title>设置Chrome对待Google总是Https</title>
+    <link href="http://forestgump.me/2013/01/set_chrome_https/?utm_source=atom&amp;utm_medium=rss&amp;utm_campaign=atom"/>
+    <updated>2013-01-30T00:00:00+08:00</updated>
+    <id>http://forestgump.me/2013/01/set_chrome_https</id>
+    <content type="html">&lt;p&gt;虽然Google已经采用了全程https, 但是在使用Google搜索的时候, 我们还是经常会发生这样的事情, 搜索出结果以后点击某一个链接, 失效.但这时常常往往补上一个&lt;strong&gt;https://&lt;/strong&gt;就可以访问了.原因大家都懂的. 那Chrome可不可以不用手动输入这个&lt;/strong&gt;https://&lt;/strong&gt;呢, 答案是肯定有的.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/chrome-net_internals.png&quot; alt=&quot;Chrome Net Internals&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;效果是这样的:&lt;/p&gt;
+
+&lt;h1&gt;之前&lt;/h1&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/google-apple-before.png&quot; alt=&quot;before&quot; /&gt;&lt;/p&gt;
+
+&lt;h1&gt;之后&lt;/h1&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/google-apple-after.png&quot; alt=&quot;after&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;GoodLuck~&lt;/p&gt;
+</content>
+  </entry>
   
   <entry>
     <title>设计网站新样式</title>
