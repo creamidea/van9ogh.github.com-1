@@ -13,7 +13,7 @@ author:
   email: cow.vangogh@gmail.com
 disqus:
   shortname: van9ogh
-server: true
+server: false
 server_port: 4000
 auto: true
 markdown: rdiscount
