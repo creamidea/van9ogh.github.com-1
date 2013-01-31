@@ -2,12 +2,13 @@ pygments: true
 safe: false # safe设置为true, 禁用插件, false为允许
 
 # 有了exclude, LICENSE.md、等文件就不会在_site中出现, 这里不使用这个选项
-#exclude:
+exclude:
+  .git
 #  LICENSE.md
 #  README.md
 #  Rakefile
 #  CNAME
-#  Guardfile
+#  Guardfile#
 title: Forest Gump
 domain: forestgump.me
 author:
