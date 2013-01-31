@@ -17,7 +17,7 @@ octopress的插件太丰富了, 看[这里](http://octopress.org/docs/plugins/)�
 图片服务
 ========
 
-还有这次比较了几个图片服务(image hosting or online photo service), 本来想使用国内的yupoo(又拍), 但是对于链接的管理太麻烦了, 免费用户的限制太多. 再一次尝试了一下![flickr-logo]({{ site.img_url }}/flickr-logo-2012_zps049493ea.png), 但是怎么也注册不上, 最后选择了[photobucket](photobucket.com) 这个网站设计的非常棒!
+还有这次比较了几个图片服务(image hosting or online photo service), 本来想使用国内的yupoo(又拍), 但是对于链接的管理太麻烦了, 免费用户的限制太多. 再一次尝试了一下![flickr-logo]({{ site.img_url }}/flickr-logo-2012_zps049493ea.png), 但是怎么也注册不上, 最后选择了[photobucket](http://photobucket.com) 而且这个网站设计的非常棒!
 
 Index Search
 ============
