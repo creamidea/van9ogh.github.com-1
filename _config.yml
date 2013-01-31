@@ -25,3 +25,5 @@ img_url: "http://i1277.photobucket.com/albums/y489/van9ogh/forestgump"
 
 # 用于标签include_code
 code_dir: "/code"
+
+destination: "van9ogh.github.com"
