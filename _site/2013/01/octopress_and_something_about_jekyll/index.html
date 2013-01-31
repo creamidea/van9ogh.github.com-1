@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>使用新的域名: forestgump.me | Forest Gump</title>
+  <title>使用jekyll的一些注意点 | Forest Gump</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link type="text/css" rel="stylesheet" href="/css/style.css">
@@ -11,7 +11,7 @@
 
 
   <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
-  <link rel="canonical" href="http://forestgump.me/2013/01/new-domain/">
+  <link rel="canonical" href="http://forestgump.me/2013/01/octopress_and_something_about_jekyll/">
 
   <!--[if lt IE 9]>
   <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
@@ -59,7 +59,7 @@
       <article id="main" class="post">
   <header>
     <hgroup>
-      <h1>使用新的域名: forestgump.me</h1>
+      <h1>使用jekyll的一些注意点</h1>
       
     </hgroup>
     <p class="posted-time">
@@ -71,7 +71,7 @@
       </span>
       at
       <span class="date">
-        Friday, 25 January 2013 - 00:00
+        Thursday, 31 January 2013 - 00:00
       </span>
     </p>
     
@@ -84,39 +84,69 @@
 	
 	  <ul>
         
-          <li>dns</li>
+          <li>octopress</li>
         
-          <li>godaddy</li>
+          <li>jekyll</li>
+        
+          <li>plugins</li>
         
       </ul>
     </nav>
   </header>
 
-  <p>域名其实半年前就想去注册的, 一直没有时间, 一开始还以为只要域名无法访问, 域名就没有被人注册(因为一开始我想注册的是quick.com, 其实查询需要到whois上, <strong>quick.com</strong>早在<strong>199x</strong>年就被抢注了).于是苦思冥想之后, 发现forestgump.me(阿甘)还没有被注册, 说来也奇怪, forestgump.com在2012年才有人想要注册, 如果当时动作快点, 或许这个域名还有机会, 话说.me域名原来是门的内哥罗(Montenegro，旧译“黑山”)的国家域名. 本文主要是记录注册的这个过程, 方便以后查阅.</p>
+  <h1>插件</h1>
 
-<p>域名提供商选的是godaddy, 在淘宝上花了55元, 过户很快, 几分钟搞定, 接下来就是尝试将github pages迁移一下, 将A记录修改为204.232.175.78, 又添加了一条CNAME: van9ogh.github.com, 然后去github对应的repo中添加了一个文件, 内容为: forestgump.me, 就都完成了.</p>
+<p>octopress的插件太丰富了, 看<a href="http://octopress.org/docs/plugins/">这里</a>和<a href="https://github.com/imathis/octopress/wiki/3rd-party-plugins">这里</a>, 一个是官方的, 一个是third-party. 于是剽窃了几个: related_posts.rb, include_code.rb, 前者是用来显示相关的帖子(用tags做为关键字), 后者是可以直接使用liquid的include_code直接加载代码文件,这两个太有用了.</p>
 
-<p>这中间, 顺带尝试了自定义域名邮件服务, 原本以为Gmail会提供, 居然没找到china!, 地址在这里:<a href="https://www.google.com/a/signup/?hl=en&amp;source=gafb-persemail-en">Google App for Business</a>. 而Hotmail, 微软弄了很多窗口加上Windows8有大又累赘的标签风格, 实在没有明白. 最后尝试了一下163, 定制了一个<a href="http://mail.forestgump.me">mail</a>页面, 不过MX记录验证还没有通过, 应该问题不大. 再次吐嘈一下Hotmail, 又是live.com, 又是hotmail.com, 又是microsoft.com, 有点像踢皮球. 这摆明了是在玩弄程序员!</p>
+<h1>图片服务</h1>
 
-<p>有空再尝试下<a href="http://www.dnspod.com">DnsPod</a>、<a href="http://www.opendns.com">OpenDNS</a>, 不过貌似在家也很快, 也没有被墙.(铁通 2M 网络)</p>
+<p>还有这次比较了几个图片服务(image hosting or online photo service), 本来想使用国内的yupoo(又拍), 但是对于链接的管理太麻烦了, 免费用户的限制太多. 再一次尝试了一下<img src="http://i1277.photobucket.com/albums/y489/van9ogh/forestgump/flickr-logo-2012_zps049493ea.png" alt="flickr-logo" />, 但是怎么也注册不上, 最后选择了<a href="photobucket.com">photobucket</a> 这个网站设计的非常棒!</p>
 
-<p>最近也有被PaaS 平台所吸引, 虽然没有VPS灵活性高, 但框架和App确实也可以做很多事情, 比如说GAE+goagnet, 以及Paas+svona等应gfw而生的tools. 而VPS甚至可以做到借助<a href="http://dnstunnel.de/">dns tunnel</a>, <a href="http://www.cs.uit.no/~daniels/PingTunnel/">ping tunnel</a>隧道免费上网, 这个换做PaaS可做不到, 除非平台提供, 因为我们无法私自开启端口. 原理其实很类似, 无非是使用server+client借助其它的协议(www、icmp、dns)将data从一个点搬运到另一个点. 如果为躲避gfw, 当然还需要tunnel技术.</p>
+<h1>Index Search</h1>
 
-<p>Github Pages和Paas以及VPS比起来, 其实已经很好的满足了需求, 因为对于blog, 并不需要数据库, 甚至不需要自己的搜索引擎(google的站点搜索足够了): 简单性是系统设计的第一要素，实现的简单比接口的简单更重要；任何值得注意的方面都要求正确性，但为了简单性，正确性可以轻微让步；设计不能过于不一致，但为了简单性，一致性可以有所牺牲；完备性应该覆盖实践中许多重要的情况，但只要简单性受到危害，完备性必须作出牺牲。这也是Richard Gabriel的<a href="http://www.jwz.org/doc/worse-is-better.html">worse is better</a>要说的.</p>
+<p>关于目录搜索服务(index search), 一开始发现在jekyll上有人做了这个项目: <a href="https://github.com/PascalW/jekyll_indextank">jekyll_indextank</a>, 原理是将blog的内容全部上传到indextank上, 利用<a href="indextank-service">indextank service api</a>进行搜索.其实这个也可以使用<a href="http://www.elasticsearch.org/">elasticsearch</a>做一个这样的服务, 支持Java的PaaS是很多的, 这里就有一篇<a href="http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/">实践</a>, indextank.com可能需要翻墙, 只能作罢.</p>
 
-<h3>Links</h3>
+<h1>jekyll的一些小技巧</h1>
+
+<h4>1. 页内跳转</h4>
+
+<p>标准的markdown语法并没有这个功能, 于是还是要使用一下html标签, 来解决.</p>
+
+<p>先定义一个锚(id)</p>
+
+<div class="highlight"><pre><code class="html"><span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">&quot;jump&quot;</span><span class="nt">&gt;</span>Hello World<span class="nt">&lt;/span&gt;</span>
+</code></pre></div>
+
+
+<p>然后使用markdown的语法:</p>
+
+<div class="highlight"><pre><code class="text">[XXXX](#jump)
+</code></pre></div>
+
+
+<h4>2. 图片url前缀</h4>
+
+<p>如果使用的是托管的图片服务器, 那么为了方便以后迁移, 可以在_config.yml中设置一个img_url, 就像这样:</p>
+
+<div class="highlight"><pre><code class="text">img_url: &quot;http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/&quot;
+</code></pre></div>
+
+
+<p>然后这样使用:</p>
+
+<script src="https://gist.github.com/4683628.js"></script>
+
+
+<h1>参考</h1>
 
 <ul>
-<li><a href="http://www.whois.com/">whois</a> 查询域名信息, 也可以到域名注册商那查询</li>
-<li><a href="http://www.godaddy.com/">godaddy</a> 最大的域名注册商</li>
-<li><a href="http://www.dnspod.com">dnspod</a> DNS智能加速(国内)</li>
-<li><a href="http://www.opendns.com">OpenDNS</a> 提供DNS优化服务</li>
-<li><a href="http://www.name.com">name.com</a> name.com的网站用户体验比godaddy好很多, 也很推荐!</li>
-<li><a href="http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html">Github pages</a>  阮一峰的这篇讲Github Pages介绍的挺好.</li>
+<li><a href="http://jiyeqian.github.com/2012/07/host-your-pages-at-github-using-jekyll/">基于jekyll的github建站指南</a></li>
+<li><a href="http://time.to.pullthepl.ug/blog/2012/8/20/octopress-top-categories-plugin/">Octopress Top Categories Plugin</a></li>
+<li><a href="http://pwiddershoven.nl/blog/2011/05/11/jekyll-indextank-static-website-fulltext-search.html">Jekyll + indextank = static websites with fulltext search</a></li>
+<li><a href="http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/">Running elasticsearch with Tomcat on Jelastic</a></li>
+<li><a href="https://github.com/mojombo/jekyll/wiki">jekyll wiki</a></li>
 </ul>
 
-
-<p> [全文完]</p>
 
 
 
@@ -152,13 +182,11 @@ $(function(){
     var url = false;
         if (e.which == 37 || e.which == 74) {  // Left arrow and J
             
-        url = '/2013/01/lua-coroutine/';
+        url = '/2013/01/set_chrome_https/';
         
         }
         else if (e.which == 39 || e.which == 75) {  // Right arrow and K
             
-        url = '/2013/01/new_site_design/';
-        
         }
         if (url) {
             window.location = url;

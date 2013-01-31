@@ -6,6 +6,7 @@ categories:
 tags:
 - coroutine
 - DSL
+- lua
 ---
 
 这篇文章来自于阅读lua的作者写的[coroutines in lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf), 翻译了一部分, 又加入一些了自己的理解. 形式化描述那部分没有翻译, 还有一些关于continuation机制的也没有过多翻译, 这两个方面的链接已经列在文末.
@@ -307,4 +308,3 @@ end
 - [libtask](http://swtch.com/libtask/) 一个协程库, C 语言
 - [libpcl](http://www.xmailserver.org/libpcl.html) 同样的, C语言协程library
 - 关于范型for还是推荐[Programming in Lua: Generic for](http://www.lua.org/pil/7.html)
-

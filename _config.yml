@@ -1,5 +1,5 @@
 pygments: true
-safe: true
+safe: false # safe设置为true, 禁用插件, false为允许
 exclude:
   LICENSE.md
   README.md
@@ -18,3 +18,10 @@ server_port: 4000
 auto: true
 markdown: rdiscount
 permalink: /:year/:month/:title/
+
+# 这个变量将配合markdown语法使用, 在图片处这样写site.img_url
+# 这个对于扩展非常重要
+img_url: "http://i1277.photobucket.com/albums/y489/van9ogh/forestgump"
+
+# 用于标签include_code
+code_dir: "/code"

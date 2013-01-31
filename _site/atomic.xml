@@ -3,13 +3,74 @@
   <title>Forest Gump</title>
   <link href="http://forestgump.me/"/>
   <link href="http://forestgump.me/atom.xml" rel="self"/>
-  <updated>2013-01-30T13:07:57+08:00</updated>
+  <updated>2013-01-31T23:57:12+08:00</updated>
   <id>http://forestgump.me/</id>
   <author>
     <name>Liu Peng</name>
     <email>cow.vangogh@gmail.com</email>
   </author>
 
+  
+  <entry>
+    <title>使用jekyll的一些注意点</title>
+    <link href="http://forestgump.me/2013/01/octopress_and_something_about_jekyll/?utm_source=atom&amp;utm_medium=rss&amp;utm_campaign=atom"/>
+    <updated>2013-01-31T00:00:00+08:00</updated>
+    <id>http://forestgump.me/2013/01/octopress_and_something_about_jekyll</id>
+    <content type="html">&lt;h1&gt;插件&lt;/h1&gt;
+
+&lt;p&gt;octopress的插件太丰富了, 看&lt;a href=&quot;http://octopress.org/docs/plugins/&quot;&gt;这里&lt;/a&gt;和&lt;a href=&quot;https://github.com/imathis/octopress/wiki/3rd-party-plugins&quot;&gt;这里&lt;/a&gt;, 一个是官方的, 一个是third-party. 于是剽窃了几个: related_posts.rb, include_code.rb, 前者是用来显示相关的帖子(用tags做为关键字), 后者是可以直接使用liquid的include_code直接加载代码文件,这两个太有用了.&lt;/p&gt;
+
+&lt;h1&gt;图片服务&lt;/h1&gt;
+
+&lt;p&gt;还有这次比较了几个图片服务(image hosting or online photo service), 本来想使用国内的yupoo(又拍), 但是对于链接的管理太麻烦了, 免费用户的限制太多. 再一次尝试了一下&lt;img src=&quot;http://i1277.photobucket.com/albums/y489/van9ogh/forestgump/flickr-logo-2012_zps049493ea.png&quot; alt=&quot;flickr-logo&quot; /&gt;, 但是怎么也注册不上, 最后选择了&lt;a href=&quot;photobucket.com&quot;&gt;photobucket&lt;/a&gt; 这个网站设计的非常棒!&lt;/p&gt;
+
+&lt;h1&gt;Index Search&lt;/h1&gt;
+
+&lt;p&gt;关于目录搜索服务(index search), 一开始发现在jekyll上有人做了这个项目: &lt;a href=&quot;https://github.com/PascalW/jekyll_indextank&quot;&gt;jekyll_indextank&lt;/a&gt;, 原理是将blog的内容全部上传到indextank上, 利用&lt;a href=&quot;indextank-service&quot;&gt;indextank service api&lt;/a&gt;进行搜索.其实这个也可以使用&lt;a href=&quot;http://www.elasticsearch.org/&quot;&gt;elasticsearch&lt;/a&gt;做一个这样的服务, 支持Java的PaaS是很多的, 这里就有一篇&lt;a href=&quot;http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/&quot;&gt;实践&lt;/a&gt;, indextank.com可能需要翻墙, 只能作罢.&lt;/p&gt;
+
+&lt;h1&gt;jekyll的一些小技巧&lt;/h1&gt;
+
+&lt;h4&gt;1. 页内跳转&lt;/h4&gt;
+
+&lt;p&gt;标准的markdown语法并没有这个功能, 于是还是要使用一下html标签, 来解决.&lt;/p&gt;
+
+&lt;p&gt;先定义一个锚(id)&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;html&quot;&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;span&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;quot;jump&amp;quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;Hello World&lt;span class=&quot;nt&quot;&gt;&amp;lt;/span&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;然后使用markdown的语法:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text&quot;&gt;[XXXX](#jump)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h4&gt;2. 图片url前缀&lt;/h4&gt;
+
+&lt;p&gt;如果使用的是托管的图片服务器, 那么为了方便以后迁移, 可以在_config.yml中设置一个img_url, 就像这样:&lt;/p&gt;
+
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text&quot;&gt;img_url: &amp;quot;http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;然后这样使用:&lt;/p&gt;
+
+&lt;script src=&quot;https://gist.github.com/4683628.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;h1&gt;参考&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;http://jiyeqian.github.com/2012/07/host-your-pages-at-github-using-jekyll/&quot;&gt;基于jekyll的github建站指南&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://time.to.pullthepl.ug/blog/2012/8/20/octopress-top-categories-plugin/&quot;&gt;Octopress Top Categories Plugin&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://pwiddershoven.nl/blog/2011/05/11/jekyll-indextank-static-website-fulltext-search.html&quot;&gt;Jekyll + indextank = static websites with fulltext search&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://www.paasmag.com/2012/06/07/running-elasticsearch-with-tomcat-on-jelastic/&quot;&gt;Running elasticsearch with Tomcat on Jelastic&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/mojombo/jekyll/wiki&quot;&gt;jekyll wiki&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+</content>
+  </entry>
   
   <entry>
     <title>设置Chrome对待Google总是Https</title>
@@ -65,6 +126,10 @@
 &lt;p&gt;除此之外, 别无所求, 我希望Blog尽可能简单, 主要用来记载一些读书笔记以及一些随想, 用来做总结之用, 我知道在没有量的基础上添加这些功能其实都是花哨的, 很多问题其实是大数据量的问题, 因此只有在文章量上去之后, 再重新设计解决.&lt;/p&gt;
 
 &lt;p&gt;因此总的来说还是满意的, 这部分工作要放一放了, 今天读了阮一峰&lt;a href=&quot;http://www.ruanyifeng.com/blog/2011/05/900-month_lifespan.html&quot;&gt;人生只有900个月&lt;/a&gt;中的照片感触也挺深的, 时间确实耗费不起, 接下来要去学习开关电源和PCB制版了, GoodLuck~&lt;/p&gt;
+
+&lt;h1&gt;2013-01-31 添加&lt;/h1&gt;
+
+&lt;p&gt;今天看到一个设计的很棒的网站:http://area51.stackexchange.com/, 我感觉这就是我想要的, 特别是宽度刚刚好, 页脚也很漂亮, 侧边栏的菜单效果非常棒, 最上面的搜索是个点睛之笔.&lt;/p&gt;
 </content>
   </entry>
   
