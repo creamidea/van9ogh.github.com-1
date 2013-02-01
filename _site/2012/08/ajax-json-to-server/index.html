@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>将JSON发往http server | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/08/ajax-json-to-server/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38171702-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>将JSON发往http server</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Wednesday, 15 August 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>这个是供需双方都迫不及待的事情， 我们看一下代码是如何解决的，但这段代码没有解决XMLHttpRequest在IE上的兼容性，我们暂且放在一边.</p>
+<div class="highlight"><pre><code class="javascript"><span class="cm">/* 注意， 这个js库可以到github上下载到 */</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="s2">&quot;./json.js&quot;</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;&lt;</span><span class="err">/script&gt;</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">language</span><span class="o">=</span><span class="s2">&quot;javascript&quot;</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span><span class="o">&gt;</span>
+<span class="kd">var</span> <span class="nx">people</span> <span class="o">=</span>  <span class="p">{</span> 
+	<span class="s2">&quot;programmers&quot;</span><span class="o">:</span> <span class="p">[</span>    
+						<span class="p">{</span> <span class="s2">&quot;firstName&quot;</span><span class="o">:</span> <span class="s2">&quot;Brett&quot;</span><span class="p">,</span> 
+						  <span class="s2">&quot;lastName&quot;</span><span class="o">:</span><span class="s2">&quot;McLaughlin&quot;</span><span class="p">,</span>
+						  <span class="s2">&quot;email&quot;</span><span class="o">:</span> <span class="s2">&quot;brett@newInstance.com&quot;</span> 
+	                    <span class="p">},</span>    
+	                    <span class="p">{</span> <span class="s2">&quot;firstName&quot;</span><span class="o">:</span> <span class="s2">&quot;Jason&quot;</span><span class="p">,</span> 
+						  <span class="s2">&quot;lastName&quot;</span><span class="o">:</span><span class="s2">&quot;Hunter&quot;</span><span class="p">,</span>
+                          <span class="s2">&quot;email&quot;</span><span class="o">:</span> <span class="s2">&quot;jason@servlets.com&quot;</span> 
+						<span class="p">}</span>    
+	        <span class="p">],</span>  
+	<span class="s2">&quot;musicians&quot;</span><span class="o">:</span> <span class="p">[</span>    
+	                    <span class="p">{</span> <span class="s2">&quot;firstName&quot;</span><span class="o">:</span> <span class="s2">&quot;Tad&quot;</span><span class="p">,</span> 
+                          <span class="s2">&quot;lastName&quot;</span><span class="o">:</span> <span class="s2">&quot;Williams&quot;</span><span class="p">,</span> 
+						  <span class="s2">&quot;genre&quot;</span><span class="o">:</span> <span class="s2">&quot;fantasy&quot;</span> 
+						<span class="p">},</span>    
+						<span class="p">{</span> <span class="s2">&quot;firstName&quot;</span><span class="o">:</span> <span class="s2">&quot;Frank&quot;</span><span class="p">,</span> 
+                          <span class="s2">&quot;lastName&quot;</span><span class="o">:</span> <span class="s2">&quot;Peretti&quot;</span><span class="p">,</span> 
+						  <span class="s2">&quot;genre&quot;</span><span class="o">:</span> <span class="s2">&quot;christian fiction&quot;</span> 
+						<span class="p">}</span>   
+			<span class="p">]</span>  
+<span class="p">}</span>
+<span class="c1">// XMLHttpRequest 属性和方法</span>
+<span class="cm">/*	open()：建立到服务器的新请求。</span>
+<span class="cm">	send()：向服务器发送请求。</span>
+<span class="cm">	abort()：退出当前请求。</span>
+<span class="cm">	readyState：提供当前 HTML 的就绪状态。</span>
+<span class="cm">	responseText：服务器返回的请求响应文本。</span>
+<span class="cm"> */</span>
+<span class="kd">var</span> <span class="nx">xmlHttp</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">xmlHttp</span> <span class="o">&amp;&amp;</span> <span class="k">typeof</span> <span class="nx">XMLHttpRequest</span> <span class="o">!=</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">xmlHttp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="cm">/* 将people转化为JSON字符串 */</span>
+<span class="kd">var</span> <span class="nx">people_string</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">people</span><span class="p">);</span>  
+<span class="cm">/* 我们使用POST方法, 其中url内容意思是在7890端口开了一个测试，打印数据 */</span>
+<span class="nx">xmlHttp</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;http://localhost:7890&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
+<span class="nx">xmlHttp</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span><span class="p">);</span>
+<span class="nx">xmlHttp</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">people_string</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div><p>我们察看一下服务器端接收到的数据是什么样子的:</p>
+<div class="highlight"><pre><code class="text">POST / HTTP/1.1
+Host: localhost:7890
+User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:14.0) Gecko/20100101 Firefox/14.0.1 FirePHP/0.7.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+Referer: http://localhost/test/
+Content-Length: 311
+Origin: http://localhost
+x-insight: activate
+Pragma: no-cache
+Cache-Control: no-cache
+
+{&quot;programmers&quot;:[{&quot;firstName&quot;:&quot;Brett&quot;,&quot;lastName&quot;:&quot;McLaughlin&quot;,&quot;email&quot;:&quot;brett@newInstance.com&quot;},{&quot;firstName&quot;:&quot;Jason&quot;,&quot;lastName&quot;:&quot;Hunter&quot;,&quot;email&quot;:&quot;jason@servlets.com&quot;}],&quot;musicians&quot;:[{&quot;firstName&quot;:&quot;Tad&quot;,&quot;lastName&quot;:&quot;Williams&quot;,&quot;genre&quot;:&quot;fantasy&quot;},{&quot;firstName&quot;:&quot;Frank&quot;,&quot;lastName&quot;:&quot;Peretti&quot;,&quot;genre&quot;:&quot;christian fiction&quot;}]}
+</code></pre></div><h2>参考</h2>
+<ul>
+	<li><a href="http://www.ibm.com/developerworks/cn/web/wa-ajaxintro/"><span class="caps">IBM</span> Ajax 系列文章</a></li>
+</ul>
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+<!---->
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/08/linux-c-load-library/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/08/tinyos-printf/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-02T00:00:24+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>jekyll | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/12/markdown/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38171702-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>jekyll</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Monday, 31 December 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>HTML</li>
+        
+          <li>markup language</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <h3>Background</h3>
+
+<p>这次将博客进行了改版, 还是使用jekyll, 看来程序员都喜欢trade-off :) 这次主要比较了reStructedText、Textile、Markdown等标记语言, 对语法高亮进行了调整, 这个过程让我对jekyll的工作机制有了一些了解。学习了很多新的名词: liquid,       YAML Front Matter, R, lyx, pygments, rdiscount, redcarpet等等.</p>
+
+<p>ruby的世界真的很奇特, 对于我这个古老的C程序员确实需要适应, 按照我的逻辑, 完成这样一个可以通过设计博客模版然后专心写txt文件, 用Git管理站点的方式, 确实是一个浩大的工程(关注的方方面面颇多):模版、标记语言、插件管理、版本控制, 如果都是C语言来写, 可能要吐血.</p>
+
+<p>jekyll的核心其实就是上面说到的几个方面, 但它更像是一个裁缝, 因为开源社区已经做的很好了.</p>
+
+<blockquote><ul>
+<li>模版引擎
+
+<ul>
+<li>liquid</li>
+</ul>
+</li>
+<li>标记语言:
+
+<ul>
+<li>markdown</li>
+<li>textile</li>
+</ul>
+</li>
+<li>语法高亮
+
+<ul>
+<li>pygments</li>
+</ul>
+</li>
+<li>版本控制
+
+<ul>
+<li>Git</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+
+<p>而且ruby本身又有内置的web服务器, 因此其实工具已经不缺了, 然后大家的需求是一个很灵活的带版本控制的静态博客站点, 于是jekyll将用户写的带标记的txt(可看作是数据流), 经过上面这些工具的颠三倒四的折疼, 输出了一个static site!</p>
+
+<h3>模版引擎: Liquid template engine</h3>
+
+<p>在使用语法高亮的时候我们会这么写:{<em>% highlight cpp </em>%}, 这个就是liquid模板引擎的语法, jekyll的liquid tags我们我们看<a href="https://github.com/mojombo/jekyll/wiki/Template-Data">这里</a>, 和<a href="https://github.com/mojombo/jekyll/wiki/liquid-extensions">这里</a>比如本博客的index.md、<em>layouts/page.html、</em>layouts/post.html就是模版.</p>
+
+<h3>轻量级标记语言: Light Markup Language</h3>
+
+<p>其实标记语言并不是要和html语言比个高低, 提出它主要是为了方便我们去编写文档, 因为html页面虽然很强大, 但是那是有浏览器解析的结果, 背后的web代码既冗余又无法理解.轻量级的标记语言有很多, 不同的语言社区主推的都不一样, 比如python社区可能更熟悉reStructedText, jekyll没有去追求大而全, 它主要支持Markdown、textile. 这两种语言本身的解析器实现有很多, Wiki上有列举, 对于Markdown, 支持rdiscount、Marrku、redcarpet(jekyll 0.2.x), 对于textile, 支持redCloth.目前github通过扩展markdown, 推出的redcarpet貌似很流行(<a href="http://github.github.com/github-flavored-markdown/">GFM</a>), rdiscount也不错. 虽然Markdown支持者众多(可以看一下<a href="http://www.yangzhiping.com/tech/r-markdown-knitr.html">这里</a>, <a href="http://www.codinghorror.com/blog/2012/10/the-future-of-markdown.html">这里</a>) 但也有人为它担忧, 主要是太过简陋, 标准不一, 读者可以看一下<a href="http://blog.liancheng.info/why-i-hate-markdown/#.UOFBNvLsOxI">这里</a>, 还有<a href="http://www.ituring.com.cn/article/8648">这里</a>.笔者最终选择的是rdiscount解析器, 它是<a href="http://www.pell.portland.or.us/~orc/Code/discount/">discount</a>的ruby实现.</p>
+
+<h3>语法高亮: pygments</h3>
+
+<p>笔者一开始认为语法高亮是使用什么js做的, 后来怎么也找不到highlight.js, 倒是找到了highlight.css, 甚是诧异, 虽然语法高亮可以通过js来做, 而且有很多优秀的实现, 也都很强大.但其实jekyll是通过python的<a href="http://pygments.org/">pygments</a>来做的, 用户只需要载入相应的highlight.css样式给jekyll, 它就可以对相应的block进行代码高亮了.于是我们只需要:{<em>% highlight </em>%} {<em>% endhighlight </em>%}, 代码就高亮了, 如果读者有兴趣, 可以下载<a href="https://github.com/mojombo/jekyll/tree/master/lib/jekyll">jekyll</a>代码,在jekyll/lib/jekyll/tags/highlight.rb中就可以看到这个调用过程了.</p>
+
+<h3>总结</h3>
+
+<p>其实静态网站生成工具有很多, 可以看看<a href="http://iwantmyname.com/blog/2011/02/list-static-website-generators.html">这里</a>, 还有<a href="http://www.mickgardner.com/2012/12/an-introduction-to-static-site.html">这篇</a>普及性的.从这样的工具的出现我们不难发现:</p>
+
+<p><strong>我们都在慢慢的将Machine和人类能做的事情进行区分开来, Machine擅长重复性的, 程序化的工作, 而人类则更擅长创造性的、设计性的工作, 我们需要的是利用这一点, 帮助我们在苦短的人生中节约时间, 创造价值.</strong></p>
+
+<p><strong>每一种语言都有它存在的道理, 脚本语言更擅长于处理string, 灵活性较高, 而底层的C语言更注重的是效率, 完成一些和操作系统密切相关的工作.因此我们不应该只学一门语言, 而要使用脚本语言帮我们完成日常的小任务, 使用底层语言帮我们处理效率上的问题, 遵循UNIX哲学, 通过组合而不是继承来解决问题!</strong></p>
+
+<h3>参考文献</h3>
+
+<p>有了上面的介绍, 我想对于搭建这样一个静态博客应该没有什么难度了:)下面推荐一些写的好的jekyll入门指导</p>
+
+<h4>QuickStart</h4>
+
+<blockquote><ul>
+<li><a href="http://www.soimort.org/posts/101/">像黑客一样写博客——Jekyll入门</a></li>
+<li><a href="https://github.com/mojombo/jekyll/wiki/Usage">Jekyll Usage</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html">搭建一个免费的，无限流量的Blog----github Pages和Jekyll入门</a></li>
+<li><a href="http://recursive-design.com/blog/2010/10/12/static-blogging-the-jekyll-way/">Static blogging the Jekyll way</a></li>
+</ul>
+</blockquote>
+
+<h4>Markdown</h4>
+
+<blockquote><ul>
+<li><a href="http://www.worldhello.net/gotgithub/appendix/markups.html">worldHello</a></li>
+<li><a href="http://wowubuntu.com/markdown">Markdown 语法说明 (简体中文版)</a></li>
+<li><a href="http://daringfireball.net/projects/markdown/syntax">Markdown 语法说明 (English Edition)</a></li>
+<li><a href="http://microjo.github.com/work/markdown_ext.html">python-markdown</a></li>
+<li><a href="http://blog.yanxyz.net/php-markdown-extra-description.html#header-id">PHP Markdown Extra说明</a></li>
+</ul>
+</blockquote>
+
+<h4>Liquid</h4>
+
+<blockquote><ul>
+<li><a href="http://robots.thoughtbot.com/post/159806314/custom-tags-in-liquid">Custom Tags in Liquid</a></li>
+<li><a href="https://github.com/mojombo/jekyll/wiki/liquid-extensions">liquid-extensions</a></li>
+</ul>
+</blockquote>
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+<!---->
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/12/Beginning-JavaScript-3rd-edition/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2013/01/lua-and-c/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-02T00:00:24+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

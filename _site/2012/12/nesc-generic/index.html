@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>nesC generic 关键字 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/12/nesc-generic/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38171702-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>nesC generic 关键字</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Wednesday, 12 December 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>学习TinyOS, 一开始很迷惑关键字generic关键字, 虽然知道这样就可以new出多个实例, 但是这种朦胧的感觉却持续了很久, 最近重新审视TinyOS, 得以写下这篇理解.接下来我会用几个实例来阐述怎么使用generic.</p>
+<h3>什么是generic</h3>
+<p>nesc的generic分为generic interface和generic component翻译过来就是通用接口和通用配件.通用接口和C++的template很类似, 我们不去讨论, 因为使用起来是没有歧义的.对于通用配件我们来看看具体的困惑是什么:</p>
+<h3>实例1:</h3>
+<p>大家可能会被源代码弄乱, 解释一下:就是在generic configuration内部使用具体的module然后new多个这样的configuration, 看看什么效果, 真的new出多个了吗?</p>
+<div class="highlight"><pre><code class="c"><span class="c1">//ITest.nc</span>
+<span class="n">interface</span> <span class="n">ITest</span> <span class="p">{</span>
+	<span class="n">command</span> <span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+	<span class="n">event</span> <span class="kt">void</span> <span class="nf">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// GeneriConfC.nc</span>
+<span class="n">generic</span> <span class="n">configuration</span> <span class="nf">GeneriConfC</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">provides</span> <span class="n">interface</span> <span class="n">ITest</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="n">components</span> <span class="n">OrdinaryModuleP</span><span class="p">;</span>
+	<span class="n">ITest</span> <span class="o">=</span> <span class="n">OrdinaryModuleP</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// OrdinaryModuleP.nc</span>
+<span class="n">module</span> <span class="n">OrdinaryModuleP</span> <span class="p">{</span>
+	<span class="n">provides</span> <span class="n">interface</span> <span class="n">ITest</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="kt">int</span> <span class="n">localVar</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+	<span class="n">command</span> <span class="kt">void</span> <span class="nf">ITest</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">localVar</span><span class="o">++</span><span class="p">;</span>
+		<span class="n">signal</span> <span class="n">ITest</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="n">localVar</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// TopAppC.nc</span>
+<span class="n">configuration</span> <span class="n">TopAppC</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="n">components</span> <span class="n">TopC</span> <span class="n">as</span> <span class="n">App</span><span class="p">;</span>
+	<span class="n">components</span> <span class="n">new</span> <span class="n">GenericConfC</span><span class="p">()</span> <span class="n">as</span> <span class="n">G1</span><span class="p">;</span>
+	<span class="n">components</span> <span class="n">new</span> <span class="n">GenericConfC</span><span class="p">()</span> <span class="n">as</span> <span class="n">G2</span><span class="p">;</span>
+	<span class="n">App</span><span class="p">.</span><span class="n">ITest</span> <span class="o">-&gt;</span> <span class="n">G1</span><span class="p">;</span>
+	<span class="n">App</span><span class="p">.</span><span class="n">ITest2</span> <span class="o">-&gt;</span> <span class="n">G2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// TopC.nc</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="n">module</span> <span class="n">TopC</span> <span class="p">{</span>
+	<span class="n">uses</span> <span class="n">interface</span> <span class="n">ITest</span><span class="p">;</span>
+	<span class="n">uses</span> <span class="n">interface</span> <span class="n">ITest</span> <span class="n">as</span> <span class="n">ITest2</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="err">@</span><span class="n">C</span><span class="p">()</span> <span class="err">@</span><span class="n">spontaneous</span><span class="p">()</span> <span class="p">{</span>
+		<span class="n">call</span> <span class="n">ITest</span><span class="p">.</span><span class="n">test</span><span class="p">();</span>
+		<span class="n">call</span> <span class="n">ITest2</span><span class="p">.</span><span class="n">test</span><span class="p">();</span>
+	<span class="p">}</span>
+
+	<span class="n">event</span> <span class="kt">void</span> <span class="n">ITest</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">printf</span><span class="p">(</span><span class="s">&quot;event ITest.testDone: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+	<span class="p">}</span>
+
+	<span class="n">event</span> <span class="kt">void</span> <span class="n">ITest2</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">printf</span><span class="p">(</span><span class="s">&quot;event ITest2.testDone:%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><ul>
+	<li>编译生成app.c :            &gt; nescc TopAppC.nc -fnesc-cfile=app.c</li>
+	<li>编译生成可执行文件a.out    &gt; nescc TopAppC.nc</li>
+</ul>
+<div class="highlight"><pre><code class="text">运行结果:
+van9ogh@VAN9OGH $ ./a.out 
+event ITest2.testDone:1
+event ITest.testDone: 1
+event ITest2.testDone:2
+event ITest.testDone: 2
+</code></pre></div><div class="highlight"><pre><code class="text">// app.c(删去了没必要的声明, 留下真正相关的代码)
+int OrdinaryModuleP$localVar = 0;
+
+static inline void TopC$ITest$testDone(int val) { printf(&quot;event ITest.testDone: %d\n&quot;, val); }
+
+static inline void TopC$ITest2$testDone(int val) { printf(&quot;event ITest2.testDone:%d\n&quot;, val); }
+
+inline static void OrdinaryModuleP$ITest$testDone(int val) {
+  TopC$ITest2$testDone(val);
+  TopC$ITest$testDone(val);
+}
+static inline void OrdinaryModuleP$ITest$test(void ) {
+  OrdinaryModuleP$localVar++; 
+  OrdinaryModuleP$ITest$testDone(OrdinaryModuleP$localVar); 
+}
+
+inline static void TopC$ITest$test(void ) { OrdinaryModuleP$ITest$test(); }
+inline static void TopC$ITest2$test(void ){ OrdinaryModuleP$ITest$test(); }
+
+int main(void ) {
+  TopC$ITest$test();
+  TopC$ITest2$test();
+}
+</code></pre></div><p>我们看到好像并没有生成两份代码拷贝的意思, 而且打印出来的结果也很令人诧异, 我们注意到不同的函数调用实际上被转发到相同的OrdinaryModuleP内部, 而对于event的处理, nesC采用广播的方式, 每一次signal其实都是将所有相关的command通知一遍.我们发现这个样子的代码几乎没有什么用处, 但我们也发现了一条可以用来广播的技巧, 不过我们还是不要趟浑水.</p>
+<h3>实例2:</h3>
+<p>这次我们看看正确的用法:(为了便于查看还是将所有的代码贴出)</p>
+<div class="highlight"><pre><code class="c"><span class="c1">// ITest.nc</span>
+<span class="n">interface</span> <span class="n">ITest</span> <span class="p">{</span>
+	<span class="n">command</span> <span class="kt">void</span> <span class="n">test</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+	<span class="n">event</span> <span class="kt">void</span> <span class="nf">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// GenericModuleP.nc</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="n">generic</span> <span class="n">module</span> <span class="nf">GenericModuleP</span><span class="p">()</span> <span class="p">{</span>
+	<span class="n">provides</span> <span class="n">interface</span> <span class="n">ITest</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="kt">int</span> <span class="n">localVar</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+	<span class="n">command</span> <span class="kt">void</span> <span class="n">ITest</span><span class="p">.</span><span class="n">test</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">localVar</span><span class="o">++</span><span class="p">;</span>
+		<span class="n">signal</span> <span class="n">ITest</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="n">localVar</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// TopC.nc</span>
+<span class="n">module</span> <span class="n">TopC</span> <span class="p">{</span>
+	<span class="n">uses</span> <span class="n">interface</span> <span class="n">ITest</span><span class="p">;</span>
+	<span class="n">uses</span> <span class="n">interface</span> <span class="n">ITest</span> <span class="n">as</span> <span class="n">ITest2</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="err">@</span><span class="n">C</span><span class="p">()</span> <span class="err">@</span><span class="n">spontaneous</span><span class="p">()</span> <span class="p">{</span>
+		<span class="n">call</span> <span class="n">ITest</span><span class="p">.</span><span class="n">test</span><span class="p">();</span>
+		<span class="n">call</span> <span class="n">ITest2</span><span class="p">.</span><span class="n">test</span><span class="p">();</span>
+	<span class="p">}</span>
+
+	<span class="n">event</span> <span class="kt">void</span> <span class="n">ITest</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">printf</span><span class="p">(</span><span class="s">&quot;event ITest.testDone: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+	<span class="p">}</span>
+
+	<span class="n">event</span> <span class="kt">void</span> <span class="n">ITest2</span><span class="p">.</span><span class="n">testDone</span><span class="p">(</span><span class="kt">int</span> <span class="n">val</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">printf</span><span class="p">(</span><span class="s">&quot;event ITest2.testDone:%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><div class="highlight"><pre><code class="c"><span class="c1">// TopAppC.nc</span>
+<span class="n">configuration</span> <span class="n">TopAppC</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="n">components</span> <span class="n">TopC</span> <span class="n">as</span> <span class="n">App</span><span class="p">;</span>
+	<span class="n">components</span> <span class="n">new</span> <span class="n">GenericModuleP</span><span class="p">()</span> <span class="n">as</span> <span class="n">G1</span><span class="p">;</span>
+	<span class="n">components</span> <span class="n">new</span> <span class="n">GenericModuleP</span><span class="p">()</span> <span class="n">as</span> <span class="n">G2</span><span class="p">;</span>
+	<span class="n">App</span><span class="p">.</span><span class="n">ITest</span> <span class="o">-&gt;</span> <span class="n">G1</span><span class="p">;</span>
+	<span class="n">App</span><span class="p">.</span><span class="n">ITest2</span> <span class="o">-&gt;</span> <span class="n">G2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>编译就不说了, 我们看看运行结果:</p>
+<div class="highlight"><pre><code class="text">van9ogh@VAN9OGH $ ./a.out 
+event ITest.testDone: 1
+event ITest2.testDone:1
+</code></pre></div><p>我们看到这次正常了.我们再看看源代码验证一下:</p>
+<div class="highlight"><pre><code class="text">// app.c
+int GenericModuleP$0$localVar = 0;
+int GenericModuleP$1$localVar = 0;
+
+static inline void TopC$ITest$testDone(int val) { printf(&quot;event ITest.testDone: %d\n&quot;, val); }
+
+inline static void GenericModuleP$0$ITest$testDone(int val){
+  TopC$ITest$testDone(val);
+}
+static inline void GenericModuleP$0$ITest$test(void )
+{
+  GenericModuleP$0$localVar++;
+  GenericModuleP$0$ITest$testDone(GenericModuleP$0$localVar);
+}
+
+inline static void TopC$ITest$test(void) { GenericModuleP$0$ITest$test(); }
+static inline void TopC$ITest2$testDone(int val) { printf(&quot;event ITest2.testDone:%d\n&quot;, val); }
+
+inline static void GenericModuleP$1$ITest$testDone(int val) { TopC$ITest2$testDone(val); }
+static inline void GenericModuleP$1$ITest$test(void )
+{
+  GenericModuleP$1$localVar++;
+  GenericModuleP$1$ITest$testDone(GenericModuleP$1$localVar);
+}
+
+inline static void TopC$ITest2$test(void) { GenericModuleP$1$ITest$test(); }
+int main(void) {
+  TopC$ITest$test();
+  TopC$ITest2$test();
+}
+</code></pre></div><p>我们看到代码被完完全全复制了两份.</p>
+<h3>总结:</h3>
+<p>不要认为new出来的就真的是一份新的, nesC语言也存在深复制和潜复制的问题, 因此我们在使用generic时要谨慎, 如果使用generic configuration要保证内部的配线也要是generic module 而不是简单的module.</p>
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+<!---->
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/10/tinyos-deluge-t2/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/12/experiences-from-a-decade-of-tinyos-development/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-02T00:00:24+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>
