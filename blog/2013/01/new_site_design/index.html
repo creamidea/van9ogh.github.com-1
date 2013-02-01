@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>设计网站新样式 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/01/new_site_design/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>设计网站新样式</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Monday, 28 January 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>css</li>
+        
+          <li>web</li>
+        
+          <li>design</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>第三次设计这个静态Blog了, 参考了大量的Blog设计, 借鉴了一些js代码和CSS样式, 好吧, 我承认, 这些其实不怎么受我控制. 虽然已经有很好的框架比如<a href="http://twitter.github.com/bootstrap/">bootstrap</a>, 甚至还有<a href="http://fortawesome.github.com/Font-Awesome/">font-awesome</a>这样精美的iconic font, 以及JQuery. 不过比起之前那个窄窄的design, 已经很满意了.特别要鸣谢我的战友: icecream帮我实现了在<a href="/about.html">about</a>页面显示<code>最新xkcd漫画</code>的想法.</p>
+
+<p>有两点我认为应该写入TODO的:</p>
+
+<ul>
+<li>图片服务和代码服务</li>
+</ul>
+
+
+<p>将图片保存在网站根目录的/images下实在不怎么高明, 因为基本上很难找到这张图片, 搜索将是一个麻烦事, 我们需要的其实是一个托管的图片服务, 解决方案其一是采用<a href="http://www.flickr.com/">flickr</a>这样的图片服务, 但是由于GFW, 我们又很担心被墙之后, 糟糕的页面.其二是用Worepress强大的插件, 搭建一个图片服务, 但是目前迫于经济, 没有现成的VPS, 而Appfog类似免费的PaaS我还没有去尝试, 但我认为是可以的.</p>
+
+<p>代码服务, 除了使用jekyll自带的pygments, 我想以后还会用gist保存, 就像这样:</p>
+
+<script src="https://gist.github.com/4654821.js"></script>
+
+
+<ul>
+<li>建立目录索引</li>
+</ul>
+
+
+<p>大家可能认为这个问题很简单, 但其实在jekyll中是要自己实现一个插件, 使得在编译时能够生成每一个分类对应的信息, 否则就只能生成一个页面而不能每一个分类对应一个页面.这个事情, Jekyll中的Liquid和YAML都帮不上忙, 只能用Ruby修改Jekyll核心, 目前还没有这个打算.其实还是很羡慕Worldpress的插件的.貌似在<a href="http://octopress.org/">octopress</a>上这个已经不是问题了, 但目前还没有打算迁移.</p>
+
+<p>除此之外, 别无所求, 我希望Blog尽可能简单, 主要用来记载一些读书笔记以及一些随想, 用来做总结之用, 我知道在没有量的基础上添加这些功能其实都是花哨的, 很多问题其实是大数据量的问题, 因此只有在文章量上去之后, 再重新设计解决.</p>
+
+<p>因此总的来说还是满意的, 这部分工作要放一放了, 今天读了阮一峰<a href="http://www.ruanyifeng.com/blog/2011/05/900-month_lifespan.html">人生只有900个月</a>中的照片感触也挺深的, 时间确实耗费不起, 接下来要去学习开关电源和PCB制版了, GoodLuck~</p>
+
+<h1>2013-01-31 添加</h1>
+
+<p>今天看到一个设计的很棒的网站:http://area51.stackexchange.com/, 我感觉这就是我想要的, 特别是宽度刚刚好, 页脚也很漂亮, 侧边栏的菜单效果非常棒, 最上面的搜索是个点睛之笔.</p>
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/01/new-domain/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2013/01/set_chrome_https/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

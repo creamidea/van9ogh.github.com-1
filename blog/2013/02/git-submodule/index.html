@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Git Submodule使用 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/02/git-submodule/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>Git Submodule使用</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Friday, 01 February 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>submodule</li>
+        
+          <li>github</li>
+        
+          <li>git</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>通常在开发项目的时候我们会引用其它的开源项目, 一般情况下, 就是用git clone然后cp到自己的项目中, 于是自己的项目越来越大, 更新时间可以喝咖啡了 ;-)</p>
+
+<p>现在有一个新的办法, 就是git submodule命令, 我们来一睹它的强大之处.</p>
+
+<p>先来看用法:</p>
+
+<script src="https://gist.github.com/4685350.js"></script>
+
+
+<p>其中 --recursive表示递归执行命令, path相当于重命名的.一般用法直接这样就行:</p>
+
+<div class="highlight"><pre><code class="sh">1. git submodule add git@github.com:van9ogh/submodule1.git submodule1
+2. git submodule add git@github.com:van9ogh/submodule2.git submodule2 
+3. git submodule init     <span class="c"># 注册这两个子项目</span>
+4. git submodule update   <span class="c"># 开始下载这两个子项目 </span>
+
+<span class="c"># foreach就是用来循环遍历的, 这样就不需要进入到每一个submodule中</span>
+5. git submodule foreach git commit -a -m <span class="s1">&#39;publish&#39;</span> 
+6. git submodule foreach git push
+</code></pre></div>
+
+
+<h1>后记</h1>
+
+<p>这次使用这个命令是因为github的jekyll不支持插件, 而我又添加了插件, 于是文章必须自己编译好之后上传, 这样就会有两个repo, 一个就是van9ogh.github.com.git用来作为github pages, 里面是编译好的HTML代码. 而源文件放在forestgump.me.git.
+这样van9ogh.github.com作为submodule.</p>
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/01/octopress_and_something_about_jekyll/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

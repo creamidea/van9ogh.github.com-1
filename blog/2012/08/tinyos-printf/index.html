@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>细说tinyos PrintfC | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/08/tinyos-printf/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>细说tinyos PrintfC</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Wednesday, 15 August 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>关于PrintfC的一些基本使用方法请直接访问<a href="http://docs.tinyos.net/tinywiki/index.php/The_TinyOS_printf_Library">tinyos tutorials Printf Library</a>, 本文给出的是tinyos底层的一些实现.</p>
+<h2>Prepare</h2>
+<p>参考的目录如下:</p>
+<ul>
+	<li>$<span class="caps">TOSROOT</span>/tos/lib/printf/</li>
+	<li>$<span class="caps">TOSROOT</span>/tos/system</li>
+	<li>$<span class="caps">TOSROOT</span>/apps/tutorials/Printf</li>
+</ul>
+<h2>问题回顾</h2>
+<p>平常我们使用PrinftC组件都是只需要记住包含的组件:PrinftC, SerialStartC, 注意包含都文件printf.h就差不多了，必要的时候再使用printfflush进行缓冲刷新，会用就行了。但是PrintfC本身底层是怎么刷新的呢?我们先将目录<sup class="footnote" id="fnr3"><a href="#fn3">3</a></sup>下的TestPrintfC.nc fired事件调用printf的部分修改一下:</p>
+<p>TestPrintfC.nc</p>
+<div class="highlight"><pre><code class="c"><span class="c1">//将四句printf注释掉，只添加一句</span>
+<span class="n">event</span> <span class="kt">void</span> <span class="n">Timer</span><span class="p">.</span><span class="n">fired</span><span class="p">()</span> <span class="p">{</span>
+		<span class="n">printf</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">);</span>
+  <span class="c1">//	printf(&quot;Hi I am writing to you from my TinyOS application!!\n&quot;);</span>
+  <span class="c1">//	printf(&quot;Here is a uint8: %u\n&quot;, dummyVar1);</span>
+  <span class="c1">//	printf(&quot;Here is a uint16: %u\n&quot;, dummyVar2);</span>
+  <span class="c1">//	printf(&quot;Here is a uint32: %ld\n&quot;, dummyVar3);</span>
+  <span class="c1">//	printfflush();</span>
+  <span class="p">}</span>
+</code></pre></div><p>Makefile再添加一句:<br />
+//设置缓冲区大小为10</p>
+<div class="highlight"><pre><code class="c"><span class="n">CFLAGS</span> <span class="o">+=</span> <span class="o">-</span><span class="n">DPRINTF_BUFFER_SIZE</span><span class="o">=</span><span class="mi">10</span>
+</code></pre></div><p>编译运行后我们发现x是每6个为一组打印的， 但是我们设置的缓冲区大小为10啊， 在目录<sup class="footnote" id="fnr1"><a href="#fn1">1</a></sup>下我们发现了printf的源代码</p>
+<p>generic-printf.h</p>
+<div class="highlight"><pre><code class="c"><span class="cp">#define printf _printf</span>
+<span class="k">extern</span> <span class="kt">int</span> <span class="nf">lowlevel_putc</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">);</span> 
+
+
+<span class="cm">/* 打印一个字符， 调用lowlevel_putc(c) */</span>
+<span class="kt">int</span>
+<span class="nf">_putchar</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">)</span>
+<span class="p">{</span>     
+  <span class="cm">/* Convert CR to CR/LF */</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">c</span> <span class="o">==</span> <span class="sc">&#39;\n&#39;</span><span class="p">)</span>
+    <span class="n">lowlevel_putc</span><span class="p">(</span><span class="sc">&#39;\r&#39;</span><span class="p">);</span>
+  <span class="n">lowlevel_putc</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="cm">/* 之所以要列出_puts是想说明对于\0是不会打印的 */</span>
+<span class="kt">int</span>
+<span class="nf">_puts</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">s</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span> <span class="o">*</span><span class="n">s</span> <span class="o">!=</span> <span class="sc">&#39;\0&#39;</span> <span class="p">)</span>
+    <span class="n">_putchar</span><span class="p">(</span><span class="o">*</span><span class="n">s</span><span class="o">++</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="c1">// printf太长了， 我们写一下程序的逻辑</span>
+<span class="c1">// 对于参数化列表请参考[1], 主要是几个变量 va_list, va_start, va_end，va_arg</span>
+<span class="kt">int</span> <span class="nf">_printf</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">format</span><span class="p">,</span> <span class="p">...)</span>
+<span class="p">{</span>
+
+   <span class="kt">va_list</span> <span class="n">ap</span><span class="p">;</span>
+   <span class="n">va_start</span><span class="p">(</span><span class="n">ap</span><span class="p">,</span> <span class="n">format</span><span class="p">);</span>
+
+   <span class="k">while</span><span class="p">(</span><span class="o">*</span><span class="n">format</span><span class="p">)</span> <span class="p">{</span>
+	   <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">format</span> <span class="o">==</span> <span class="s">&quot;%&quot;</span><span class="p">)</span>
+		<span class="c1">//	分别处理%f %d %c %s %l %u 一系列的格式的打印;</span>
+
+	   <span class="n">_putchar</span><span class="p">(</span><span class="o">*</span><span class="n">format</span><span class="o">++</span><span class="p">);</span>
+   <span class="p">}</span>
+   <span class="n">va_end</span><span class="p">(</span><span class="n">ap</span><span class="p">);</span>
+   <span class="k">return</span> <span class="n">cntr_val</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>我们可以看到调用关系为 printf&#8594; putchar&#8594;lowlevel_putc() <br />
+我们继续追踪, 寻找lowlevel_putc,发现在PutcharP.nc中找到了它的足迹:</p>
+<div class="highlight"><pre><code class="c"><span class="n">module</span> <span class="n">PutcharP</span> <span class="p">{</span>
+  <span class="n">provides</span> <span class="n">interface</span> <span class="n">Init</span><span class="p">;</span>
+  <span class="n">uses</span> <span class="n">interface</span> <span class="n">Putchar</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">implementation</span> <span class="p">{</span>
+
+<span class="c1">// 省略了其他实现</span>
+<span class="kt">int</span> <span class="n">lowlevel_putc</span><span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">)</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">noinline</span><span class="p">))</span> <span class="err">@</span><span class="n">C</span><span class="p">()</span> <span class="err">@</span><span class="n">spontaneous</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">call</span> <span class="n">Putchar</span><span class="p">.</span><span class="n">putchar</span> <span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>继续追踪， 发现有两个组件提供putchar commnad, SerialPrintfP 和 PrintfP</p>
+<div class="highlight"><pre><code class="c"><span class="c1">// PrintfP.nc 实现</span>
+<span class="cp">#undef putchar</span>
+  <span class="n">command</span> <span class="kt">int</span> <span class="n">Putchar</span><span class="p">.</span><span class="n">putchar</span> <span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span><span class="p">((</span><span class="n">state</span> <span class="o">==</span> <span class="n">S_STARTED</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">call</span> <span class="n">Queue</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="p">((</span><span class="n">PRINTF_BUFFER_SIZE</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)))</span> <span class="p">{</span>
+      <span class="n">state</span> <span class="o">=</span> <span class="n">S_FLUSHING</span><span class="p">;</span>
+      <span class="n">sendNext</span><span class="p">();</span>
+    <span class="p">}</span> 
+    <span class="n">atomic</span> <span class="p">{</span>
+      <span class="k">if</span><span class="p">(</span><span class="n">call</span> <span class="n">Queue</span><span class="p">.</span><span class="n">enqueue</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">SUCCESS</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">else</span> <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+<span class="c1">// SerialPrintfP.nc 实现</span>
+<span class="cp">#undef putchar</span>
+  <span class="n">command</span> <span class="kt">int</span> <span class="n">Putchar</span><span class="p">.</span><span class="n">putchar</span> <span class="p">(</span><span class="kt">int</span> <span class="n">c</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">SUCCESS</span> <span class="o">==</span> <span class="n">call</span> <span class="n">UartByte</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="o">?</span> <span class="n">c</span> <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="p">}</span>
+</code></pre></div><p>我们发现PrintfP提供的是带有队列的putchar， 每次执行putchar都是先将字符送入队列， 并且当队列的大小超过队列总长度的一半时， 我们开始进行”FLUSH“, 而另外一个则直接调用send， 发往串口， 因此这里就不难理解前面的现象了， :)<br />
+在结束的时候我们再看一下队列的定义:</p>
+<div class="highlight"><pre><code class="c"><span class="c1">// 在PrintfC.nc中</span>
+<span class="cp">#include &quot;printf.h&quot;</span>
+
+<span class="n">configuration</span> <span class="n">PrintfC</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+  <span class="c1">// .....</span>
+  <span class="n">components</span> <span class="n">new</span> <span class="n">PrintfQueueC</span><span class="p">(</span><span class="kt">uint8_t</span><span class="p">,</span> <span class="n">PRINTF_BUFFER_SIZE</span><span class="p">)</span> <span class="n">as</span> <span class="n">QueueC</span><span class="p">;</span>
+  <span class="n">PrintfP</span><span class="p">.</span><span class="n">Queue</span> <span class="o">-&gt;</span> <span class="n">QueueC</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="c1">// include.h</span>
+<span class="cp">#ifndef PRINTF_BUFFER_SIZE</span>
+<span class="cp">#define PRINTF_BUFFER_SIZE 250 </span>
+<span class="cp">#endif</span>
+
+<span class="cp">#if PRINTF_BUFFER_SIZE &gt; 255</span>
+<span class="cp">#define PrintfQueueC	BigQueueC</span>
+<span class="cp">#define PrintfQueue	    BigQueue</span>
+<span class="cp">#else</span>
+<span class="cp">#define PrintfQueueC	QueueC</span>
+<span class="cp">#define PrintfQueue	    Queue</span>
+<span class="cp">#endif</span>
+</code></pre></div><p>作者对队列的选用进行了编译时动态选择， 很细腻的手法啊!</p>
+<h2>参考</h2>
+<ul>
+	<li><a href="http://blog.csdn.net/hackbuteer1/article/details/7558979">C 语言的可变参数表函数的设计</a></li>
+</ul>
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/08/ajax-json-to-server/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/08/websocket/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

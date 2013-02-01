@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>pthread: 回收线程的重要性 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/09/pthread-memory-leak/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>pthread: 回收线程的重要性</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Sunday, 09 September 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <h3>原因</h3>
+<p>笔者最经在写并发服务器， 一个采用多线程accept模型， 一个采用epoll异步事件+非阻塞IO模型， 在参考并测试sourceforge上一个小型的基于多线程accept<a href="/code/c/linux/httpd.c" type="color:red">web服务器httpd.c</a>时， 遇到了pthread_create: Cannot allocate memory错误， 我使用的是apache的ab测试. 最终发现由于使用了多线程并没有pthread_join() 或者 设置分离属性， 造成了极大的内存泄露, 另外在测试过程中我发现， 即使回收了线程的资源， 但是每个进程所能分配的线程数是有限制的， 这极大的抑制了并发量, 读者可以查看一下我修改过后的代码， 带有注释, 具体不再贴代码.</p>
+<p>本机的测试环境如下， 使用多线程accept在本机测试最大并发量在30左右, 读者可以自己测试比较下， 随着机器的性能结果有差异， 不过经过此次分析， 我想要想做到高并发走apache的老路是行不通的， 我想最佳的模型应该是： 前台采用epoll异步事件+非阻塞IO模型， 后台引入线程池（少量线程）减少CPU密集计算带来的阻塞。</p>
+<div class="highlight"><pre><code class="bash">CPU:    Intel Core2 P7450 2.13GHZ
+Memory: 2G
+
+//ab <span class="nb">test</span>:
+van9ogh@WSN <span class="nv">$ </span>ab -n 10000 -c 30 http://127.0.0.1:9001/index.html
+
+// httpd服务器显示
+van9ogh@WSN <span class="nv">$ </span>./a.out 
+httpd running on port 9001
+pthread_create: Cannot allocate memory
+</code></pre></div><h3>pmap</h3>
+<p>pmap， 我们使用pmap看一下当httpd.c程序出现pthread_create: Cannot allocate memory错误时， 内存的使用情况:</p>
+<div class="highlight"><pre><code class="bash">van9ogh@WSN <span class="nv">$ </span>pmap -d 31547
+31547:   ./a.out
+Address   Kbytes Mode  Offset           Device    Mapping
+00110000    1660 r-x-- 0000000000000000 008:00003 libc-2.15.so
+002af000       8 r---- 000000000019f000 008:00003 libc-2.15.so
+002b1000       4 rw--- 00000000001a1000 008:00003 libc-2.15.so
+002b2000      12 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+002b5000     112 r-x-- 0000000000000000 008:00003 libgcc_s.so.1
+002d1000       4 r---- 000000000001b000 008:00003 libgcc_s.so.1
+002d2000       4 rw--- 000000000001c000 008:00003 libgcc_s.so.1
+00a18000     128 r-x-- 0000000000000000 008:00003 ld-2.15.so
+00a38000       4 r---- 000000000001f000 008:00003 ld-2.15.so
+00a39000       4 rw--- 0000000000020000 008:00003 ld-2.15.so
+00ce1000      92 r-x-- 0000000000000000 008:00003 libpthread-2.15.so
+00cf8000       4 r---- 0000000000016000 008:00003 libpthread-2.15.so
+00cf9000       4 rw--- 0000000000017000 008:00003 libpthread-2.15.so
+00cfa000       8 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+00de4000       4 r-x-- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0103a000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0103b000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0183b000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0183c000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0203c000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0203d000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0283d000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0283e000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0303e000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0303f000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+0383f000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+03840000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+04040000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+04041000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+04841000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+04842000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+05042000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+05043000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+05843000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+05844000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+06044000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+06045000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+06845000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+06846000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+07046000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+07047000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+07847000       4 ----- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+07848000    8192 rw--- 0000000000000000 000:00000   <span class="o">[</span> anon <span class="o">]</span>
+bf994000     132 rw--- 0000000000000000 000:00000   <span class="o">[</span> stack <span class="o">]</span>
+...............
+mapped: 3110692K    writeable/private: 3105356K    shared: 0K
+</code></pre></div><p>我们看到包括swap， 3G的内存全部被消耗, 注意<a href="http://linux.die.net/man/1/pmap">man pmap</a>中解释[anon]表示堆分配， [stack]表示栈分配. 系统为每一个线程分配了8M的栈空间， 而我们其实只需要和一个客户端套接字发生少量的交互而已.</p>
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/09/sudo/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/10/tinyos-deluge-t2/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

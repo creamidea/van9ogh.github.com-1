@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>设置Chrome对待Google总是Https | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/01/set_chrome_https/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>设置Chrome对待Google总是Https</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Wednesday, 30 January 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>chrome</li>
+        
+          <li>https</li>
+        
+          <li>google</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>虽然Google已经采用了全程https, 但是在使用Google搜索的时候, 我们还是经常会发生这样的事情, 搜索出结果以后点击某一个链接, 失效.但这时常常往往补上一个<strong>https://</strong>就可以访问了.原因大家都懂的. 那Chrome可不可以不用手动输入这个</strong>https://</strong>呢, 答案是肯定有的.</p>
+
+<p><img src="/images/chrome-net_internals.png" alt="Chrome Net Internals" /></p>
+
+<p>效果是这样的:</p>
+
+<h1>之前</h1>
+
+<p><img src="/images/google-apple-before.png" alt="before" /></p>
+
+<h1>之后</h1>
+
+<p><img src="/images/google-apple-after.png" alt="after" /></p>
+
+<p>GoodLuck~</p>
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/01/new_site_design/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2013/01/octopress_and_something_about_jekyll/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Lua学习笔记(1) | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/01/lua-oop/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>Lua学习笔记(1)</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Saturday, 05 January 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>oop</li>
+        
+          <li>lua</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>今天确实看了相当多的概念, 堆栈快溢出了;-) 从<a href="https://github.com/cloudwu/skynet">skynet</a>, <a href="http://en.wikipedia.org/wiki/Domain-specific_language">DSL</a>, <a href="http://www.w3school.com.cn/xsl/index.asp">XSLT</a>, 元编程, Lua Coroutine, lua_next, lua stack, 并行状态机(psm), 到<a href="http://zh.wikipedia.org/zh-cn/MUD">MUD</a>, <a href="http://zguide.zeromq.org/page:all">zeroMQ</a>, <a href="http://redis.io/">Redis</a>, Lua oop 等等. 本来打算开始看Lua源码的, 不过走到这里才发现还是从熟悉语言本身开始.</p>
+
+<h2>值得写下来的几点有:</h2>
+
+<ul>
+<li>lua_next函数</li>
+<li>并行状态机</li>
+<li>元编程</li>
+<li>Lua中冒号和‘.’的区别</li>
+</ul>
+
+
+<h2>1. lua_next函数</h2>
+
+<p>这个函数确实花费了我一些时间的. lua中有时候压栈的是一个table, 由于table本身有很多的类型, 虽然lua C API提供了众多的操作栈的函数, 但是设计者还是再添一笔, 这就是lua_next, 这个函数的执行逻辑是这样的:</p>
+
+<p>除了<strong>// do something</strong> 那部分, 剩下的整个构成了函数lua_next</p>
+
+<div class="highlight"><pre><code class="text">while (弹出key) {
+        压入table中下一个key 和 value 两个
+        
+        // do something
+
+        弹出value
+    }
+</code></pre></div>
+
+
+<p>由于一开始需要弹出一个key, 于是通常情况下我们需要预先压入一个nil, 然后再操作, 连起来就是这样:</p>
+
+<div class="highlight"><pre><code class="c">     <span class="c1">// 初始栈: [ table ], table: { name = &quot;LiuPeng&quot;, id = 1 }</span>
+     <span class="n">lua_pushnil</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>  <span class="cm">/* first key */</span>
+     <span class="cm">/* 第二个参数指的是table在栈中的位置</span>
+<span class="cm">       这里我们假设栈中为[ table, nil ],</span>
+<span class="cm">       这时1和-2是一个意思</span>
+<span class="cm">     */</span>
+     <span class="k">while</span> <span class="p">(</span><span class="n">lua_next</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 也可以写成 : while(lua_next(L, -2) != 0) {</span>
+       <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s - %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+              <span class="n">lua_typename</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">lua_type</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)),</span>
+              <span class="n">lua_typename</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">lua_type</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)));</span>
+       <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+     <span class="p">}</span>
+</code></pre></div>
+
+
+<p>事实上table本身并没有发生变化, 迭代完成和栈又恢复原状: [ table ]</p>
+
+<p><strong>我们来一个完整的demo</strong></p>
+
+<p>lua_next.c</p>
+
+<div class="highlight"><pre><code class="c"><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;lua.h&gt;</span>
+<span class="cp">#include &lt;lualib.h&gt;</span>
+<span class="cp">#include &lt;lauxlib.h&gt;</span>
+
+<span class="cp">#define STACKSCREENSHOT(Code) (Code), _StackPrint(L)</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">_StackPrint</span><span class="p">(</span><span class="n">lua_State</span> <span class="o">*</span><span class="n">L</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">J</span><span class="p">,</span> <span class="n">nElements</span> <span class="o">=</span> <span class="n">lua_gettop</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>   <span class="c1">// 获得当前栈的elements个数</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot; nElements = %d, [ &quot;</span><span class="p">,</span> <span class="n">nElements</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">J</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">J</span> <span class="o">&lt;=</span> <span class="n">nElements</span><span class="p">;</span> <span class="n">J</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">lua_isnil</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">J</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">&quot; - &quot;</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="n">printf</span><span class="p">(</span><span class="s">&quot; %s &quot;</span><span class="p">,</span> <span class="n">lua_typename</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">lua_type</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">J</span><span class="p">)));</span>
+            <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot; ]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* 完整的lua_next描述为:</span>
+
+<span class="cm">   while (弹出key) {</span>
+<span class="cm">       压入table中下一个key &amp; value</span>
+<span class="cm">       </span>
+<span class="cm">       // do something</span>
+
+<span class="cm">       弹出value</span>
+<span class="cm">   }</span>
+<span class="cm">*/</span>
+
+<span class="kt">int</span> <span class="nf">table_next</span><span class="p">(</span><span class="n">lua_State</span> <span class="o">*</span><span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lua_next</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">lua_tostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">);</span>
+        <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">lua_tostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+        <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">lua_State</span> <span class="o">*</span><span class="n">L</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">t_idx</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+    <span class="n">L</span> <span class="o">=</span> <span class="n">luaL_newstate</span><span class="p">();</span>
+    <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">luaL_loadfile</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;test.lua&quot;</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">lua_pcall</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+
+    <span class="n">lua_getglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;testtab&quot;</span><span class="p">);</span>
+    <span class="n">t_idx</span> <span class="o">=</span> <span class="n">lua_gettop</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">lua_pushnil</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">STACKSCREENSHOT</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="n">table_next</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">k</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">STACKSCREENSHOT</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Settings[%s] = %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;--------------------------------</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">lua_pushnil</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">STACKSCREENSHOT</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">table_next</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">k</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">STACKSCREENSHOT</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Settings[%s] = %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">STACKSCREENSHOT</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">lua_close</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p><strong>test.lua</strong></p>
+
+<div class="highlight"><pre><code class="lua"><span class="n">testtab</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">MsgCode</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">1&quot;</span><span class="p">,</span>
+    <span class="n">Host</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">127.0.0.1&quot;</span><span class="p">,</span>
+    <span class="n">abc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">test&quot;</span><span class="p">,</span>
+    <span class="n">id</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ok&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<h2>2. 并行状态机psm</h2>
+
+<p>以前写web服务器的时候就对epoll+状态机感到头疼, 因为有时候会出现递归调用, 加上锁、内存管理, 会发现即使有valgrind这样的好工具, 依旧难办, 不过今天不是讨论这个的, 我们来看一个新奇的概念:并行状态机, 也就是在状态机中出现多个状态同时执行, 其实只要用多进程fork就可以办到.我写了一个C版本的.</p>
+
+<div class="highlight"><pre><code class="c"><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+
+<span class="cp">#define SHOW() printf(&quot;[DEBUG] %d show input: %c\n&quot;, __LINE__, input)</span>
+<span class="cp">#define LISTEN (input = getchar()), getchar(); switch(input) {</span>
+
+<span class="cp">#define END }</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">input</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">pid</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+        <span class="n">LISTEN</span>
+            <span class="k">case</span> <span class="sc">&#39;A&#39;</span>:
+                <span class="n">LISTEN</span>
+                    <span class="k">case</span> <span class="sc">&#39;B&#39;</span>:
+                        <span class="n">SHOW</span><span class="p">();</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="k">case</span> <span class="sc">&#39;C&#39;</span>:
+                        <span class="n">SHOW</span><span class="p">();</span>
+                    <span class="k">case</span> <span class="sc">&#39;D&#39;</span>:
+                        <span class="n">SHOW</span><span class="p">();</span>
+                <span class="n">END</span>
+                <span class="k">break</span><span class="p">;</span>  <span class="c1">// end A</span>
+            <span class="k">case</span> <span class="sc">&#39;E&#39;</span>:
+                <span class="n">SHOW</span><span class="p">();</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="n">END</span>
+
+        <span class="n">LISTEN</span>
+            <span class="k">case</span> <span class="sc">&#39;F&#39;</span>:
+                <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+                <span class="n">LISTEN</span>
+                    <span class="k">case</span> <span class="sc">&#39;G&#39;</span>:
+                        <span class="n">SHOW</span><span class="p">();</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="k">case</span> <span class="sc">&#39;H&#39;</span>:
+                        <span class="n">SHOW</span><span class="p">();</span>
+                        <span class="k">break</span><span class="p">;</span>
+                <span class="n">END</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// child exit</span>
+            <span class="k">case</span> <span class="sc">&#39;I&#39;</span>:
+                <span class="n">SHOW</span><span class="p">();</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="n">END</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p>可能一下子很难理解, 读者不必关心逻辑, 因为这只是举个例子, 我们关注fork的位置, 然后将代码编译运行看看结果.</p>
+
+<div class="highlight"><pre><code class="bash">van9ogh@VAN9OGH <span class="nv">$ </span>./a.out 
+A
+B
+<span class="o">[</span>DEBUG<span class="o">]</span> 20 show input: B
+F
+H
+<span class="o">[</span>DEBUG<span class="o">]</span> 41 show input: H
+<span class="o">[</span>DEBUG<span class="o">]</span> 46 show input: H
+</code></pre></div>
+
+
+<p>我们看到的是, 41， 46行代码同时执行了, 这只是一个思路, 供以后参考!!</p>
+
+<h2>3. 元编程</h2>
+
+<p>类似与道家认为的几大元素一样:金、木、水、火、土, 又或者原子一样, 我们的自然界表现虽然很丰富, 但是构建整个世界的基本物质就是这些, 编程语言也一样, 虽然语言本身可以做很强大的事情, 但是在当前这样的计算机体系结构下, 基本元素就那些, 虽然鸡生蛋、蛋生鸡很难有结果, 但我们可以理解为鸡和蛋就像量子的所说的叠加态一样, 它们是相互影响的.</p>
+
+<p>对于元编程我的理解是能够重新定义基本操作的能力.c++的template, 重载, lua中的oop, <a href="http://manual.luaer.cn/2.8.html">元表</a>就是利用了这一特性.</p>
+
+<h2>4. Lua中Colon(冒号)和dot(点)有什么区别</h2>
+
+<p>最终我在<a href="http://book.luaer.cn/_96.htm">这里</a>发现了这一点, 简单点说lua用冒号隐藏了self参数, 方便了oop.</p>
+
+<h2>5. 参考 &amp; 资料</h2>
+
+<ul>
+<li><a href="https://github.com/cloudwu/skynet">skynet</a></li>
+<li><a href="http://www.w3school.com.cn/xsl/index.asp">XSLT</a> XSLT在XML中, 类似于CSS之于HTML</li>
+<li><a href="http://en.wikipedia.org/wiki/Domain-specific_language">DSL</a></li>
+<li><a href="http://zh.wikipedia.org/zh-cn/MUD">MUD</a></li>
+<li><a href="http://zguide.zeromq.org/page:all">zeroMQ</a></li>
+<li><a href="http://redis.io/">Redis</a> key-value键值存储</li>
+<li><a href="http://manual.luaer.cn/2.8.html">元表</a> Lua中对元表的介绍</li>
+</ul>
+
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+  <!-- 用来产生一条下划线-->
+  <header>
+  </header>
+
+  <h3>相关文章</h3>
+   
+    <li><a href="/2013/01/lua-coroutine/">Lua学习笔记(2): 协程</a><br /></li>
+   
+    <li><a href="/2013/01/lua-and-c/">How to use Lua and C together</a><br /></li>
+  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/01/lua-and-c/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2013/01/c-swap-two-variable/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

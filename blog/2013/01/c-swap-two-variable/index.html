@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>如何交换两个数 | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/01/c-swap-two-variable/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>如何交换两个数</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Wednesday, 09 January 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>bit</li>
+        
+          <li>swap</li>
+        
+          <li>异或</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <h2>1. 故事是这样的</h2>
+
+<p>这次发现源于写一个全排列生成器, 很容易做到的办法当然是使用递推关系: n个数的全排列等于n个{n-1}个数全排列之和.
+于是用lua开始写了:</p>
+
+<div class="highlight"><pre><code class="lua"><span class="c1">-- 全排列生成器</span>
+<span class="k">function</span> <span class="nf">permgen</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+       <span class="n">printResult</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">else</span>
+       <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="k">do</span>
+           <span class="cm">--[[ n个数的全排列可以看作是n个{剩下n-1个数}的全排列.</span>
+<span class="cm">               然后递归即可</span>
+<span class="cm">          --]]</span>
+           <span class="c1">-- put i-th element as the last one</span>
+           <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+           <span class="c1">-- generate all permutations of the other elements</span>
+           <span class="n">permgen</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+           <span class="c1">-- restore i-th element</span>
+           <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+       <span class="k">end</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+ 
+<span class="k">function</span> <span class="nf">printResult</span> <span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">v</span> <span class="k">in</span> <span class="nb">ipairs</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">do</span>
+       <span class="nb">io.write</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s"> &quot;</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="nb">io.write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+ 
+<span class="n">permgen</span> <span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">},</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+
+<p>当然OK了, 然后我想还是用C写一个然后Lua调用玩玩.</p>
+
+<div class="highlight"><pre><code class="c"><span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">Set</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">n</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Set_t</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">printSet</span><span class="p">(</span><span class="n">Set_t</span> <span class="o">*</span><span class="n">S</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">S</span><span class="o">-&gt;</span><span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%2d &quot;</span><span class="p">,</span> <span class="n">S</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">pergen</span><span class="p">(</span><span class="n">Set_t</span> <span class="o">*</span><span class="n">S</span><span class="p">,</span> <span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="cp">#define SWAP(x, y) x = x - y; y = y + x; x = y - x;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printSet</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 1. swp</span>
+        <span class="n">SWAP</span><span class="p">(</span><span class="n">S</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">S</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+
+        <span class="c1">// 2. 生成这n-1个数的全排列</span>
+        <span class="n">pergen</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+
+        <span class="c1">// 3. 还原这个Set</span>
+        <span class="n">SWAP</span><span class="p">(</span><span class="n">S</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">S</span><span class="o">-&gt;</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="n">Set_t</span> <span class="n">S</span><span class="p">;</span>
+    <span class="n">S</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+    <span class="n">S</span><span class="p">.</span><span class="n">n</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    
+    <span class="n">S</span><span class="p">.</span><span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">S</span><span class="p">.</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="n">S</span><span class="p">.</span><span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    
+    <span class="n">pergen</span><span class="p">(</span><span class="o">&amp;</span><span class="n">S</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+
+    <span class="n">free</span><span class="p">(</span><span class="n">S</span><span class="p">.</span><span class="n">a</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p><strong>一模一样的啊, 可是编译怎么会这样???</strong></p>
+
+<div class="highlight"><pre><code class="bash">van9ogh@VAN9OGH <span class="nv">$ </span>./a.out 
+ 0  2  3 
+ 0  0  3 
+ 0  0  3 
+ 0  0  3 
+ 0  0  0 
+ 0  0  0 
+</code></pre></div>
+
+
+<p>最后终于发现, 原来这个版本的swap, 不能交换swap(x, x), 而且x, y异号时容易溢出.</p>
+
+<h2>2. 如何交换两个数</h2>
+
+<p>以前看谭浩强那本C语言书的时候发现<strong>用异或操作可以不用第三个变量就交换两个数</strong>, 后来学习算法的时候又学会了一种, 到目前为止, 我可以写出四种原理不同的swap.</p>
+
+<h3>1. 普通的方法(不写了, 相信你能想到)</h3>
+
+<h3>2. 异或版本</h3>
+
+<p>异或版本的本质是通过比较a和b的差异然后存储在某一个变量中, 于是在我手中的是一个差异和某一个变量, 那么我就可以还原出来另一个变量.这个让我想起了SVN等基于差异的版本控制系统, 以及图像处理中的优化, 通过比较差异我们这个原理我们可以做很多的事情.</p>
+
+<p><strong>局限性</strong>: swap(&amp;x, &amp;x)是不行的</p>
+
+<div class="highlight"><pre><code class="c"><span class="c1">// 1. 写法1</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">^</span> <span class="n">b</span><span class="p">;</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">^</span> <span class="n">a</span><span class="p">;</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">^</span> <span class="n">b</span><span class="p">;</span>
+
+<span class="c1">// 2. 写法2</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">^</span> <span class="n">a</span><span class="p">;</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">^</span> <span class="n">b</span><span class="p">;</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">^</span> <span class="n">a</span><span class="p">;</span>
+</code></pre></div>
+
+
+<h3>3. 相减, 相加版本</h3>
+
+<ol>
+<li>如果知道了a+b和a那么我就知道b</li>
+<li>如果知道了a-b和a那么我也知道b</li>
+</ol>
+
+
+<p><strong>局限性</strong>: swap(&amp;x, &amp;x)是不行的, 另外对于a+b版本, a和b同号会溢出, 对于a-b版本, a和b异号会溢出.(这个很好想, 因为一个变量容纳不了它们之和)</p>
+
+<p><strong>a+b</strong>版本</p>
+
+<div class="highlight"><pre><code class="c"><span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+</code></pre></div>
+
+
+<p><strong>a-b</strong>版本</p>
+
+<div class="highlight"><pre><code class="c"><span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">;</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">;</span>
+</code></pre></div>
+
+
+<h3>4. 利用运算符的优先级, 一行就够了!</h3>
+
+<div class="highlight"><pre><code class="c"><span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">q</span> <span class="o">-</span> <span class="p">(</span><span class="n">q</span> <span class="o">=</span> <span class="n">p</span><span class="p">);</span>
+</code></pre></div>
+
+
+<p>这行代码实在是很难让人理解, 我们先看汇编之后的结果:</p>
+
+<p><strong>test.c</strong></p>
+
+<div class="highlight"><pre><code class="c"><span class="cp">#include &lt;stdio.h&gt;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">p</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">q</span> <span class="o">-</span> <span class="p">(</span><span class="n">q</span> <span class="o">=</span> <span class="n">p</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p><strong>test.i</strong></p>
+
+<div class="highlight"><pre><code class="text"> .globl  main
+main:
+;--------------------------------------------------
+    ; 前三行是在函数开始时候很典型的代码
+    ; 1. 保存ebp寄存器
+    pushl   %ebp
+    ; 2. 将当前栈指针esp赋值给ebp
+    movl    %esp, %ebp
+    ; 3. 调整栈指针, 向下移动16个字节, 给局部变量留出空间
+    subl    $16, %esp
+;--------------------------------------------------
+    ; 下面5行用来初始化
+    ; 将10赋值给 %ebp - 8的位置
+    movl    $10, -8(%ebp)
+    ; 将20赋值给 %ebp - 4的位置
+    movl    $20, -4(%ebp)
+    ; 将%ebp - 4 中的数字(也就是20)赋值给寄存器eax
+    movl    -4(%ebp), %eax
+    ; 将%ebp - 8 中的数字(也就是10)赋值给寄存器edx
+    movl    -8(%ebp), %edx
+;--------------------------------------------------
+    ; 先计算p = p+q-(p = q)中的p+q部分
+    ; 10+20结果保存在edx中 (%edx) = 30
+    addl    %eax, %edx
+
+;--------------------------------------------------
+    ; 再计算p = p+q-(p = q)中p=q的部分
+    ; 将%eax寄存器中的值再次赋值为10
+    movl    -8(%ebp), %eax
+    ; 将%ebp - 4 位置的值修改为10
+    movl    %eax, -4(%ebp)
+;--------------------------------------------------
+    ; 然后计算两个部分之差
+    ; 将%eax中的值修改为%edx中的30
+    movl    %edx, %eax
+    ; 后面的减去前面的结果赋值给%eax, 30-10=20, %eax中的值为20
+    subl    -4(%ebp), %eax
+;--------------------------------------------------
+    ; 最后在执行最左边的赋值
+    ; 将%eax中的20赋值给%ebp-8
+    movl    %eax, -8(%ebp)
+;--------------------------------------------------
+    ; 将%eax归零
+    movl    $0, %eax
+
+    ; 返回, 最终%ebp - 8 地址内的值为20
+    ;           %ebp - 4 地址内的值为10
+    leave
+    ret
+</code></pre></div>
+
+
+<p>每一行的意思都写出来了, 最终完成了交换, 奇怪的是我们并没有通过什么差异的思想来交换啊, 为什么也能够交换呢, 这个和C语言的结合顺序有关, 对于p+q - (p = q), 先计算的是p+q, 然后再计算(p=q), 因此p并没有丢失, 最终还在寄存器中存着呢!</p>
+
+<p>这个虽然没有swap(&amp;x, &amp;x)的局限性, 但是还是存在溢出的风险.以及编译器实现上的差异导致的问题, 因此把玩把玩即可, 千万不要用在项目中, 其实还是常规的思路最靠谱!</p>
+
+<h2>3. 参考</h2>
+
+<p><a href="http://stallman.blogbus.com/logs/18582675.html">AT&amp;T Assembly :HelloWorld.s</a> 介绍了一点汇编知识, 写的不错!</p>
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/01/lua-oop/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2013/01/lua-coroutine/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>

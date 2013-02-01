@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>TinyOS: MagXC.nc | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2012/12/tinyos-sensorboards-mts300cb-magx/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29805968-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    if (window.location.hostname.match(/local(?:host)?$/)) {
+      return;
+    }
+
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>TinyOS: MagXC.nc</h1>
+      
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Friday, 14 December 2012 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <ul>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <h2>说明</h2>
+<p>本来想继续翻译Philip Levis那篇文章的, 不过对于ADC其实我并不是太理解, 所以还是先探究一下tos/sensorboards/mts300下的组件.下面我们选择tos/sensorboards/mts300/MagXC.nc来探究一下, 看看到底为什么我们只需要call MagX.read数据就出来了?其实这中间走了许多层, 出现了若干我们未知的领域.分析完以后我们自己通过纯手写一个底层的nesC源代码烧到micaz节点上, 看看是不是和我们预期所想的一样. 我想这种探究还是很有意思的.</p>
+<h3>MagXC.nc</h3>
+<p>这是一个HIL层的地磁场传感器的读取接口, 用户只需要将read接口连接上去即可, 非常的易于使用, 我们先来看看内部的实现:</p>
+<div class="highlight"><pre><code class="c"><span class="cp">#include &quot;mts300.h&quot;</span>
+
+<span class="n">generic</span> <span class="n">configuration</span> <span class="nf">MagXC</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">provides</span> <span class="n">interface</span> <span class="n">Mag</span><span class="p">;</span>
+  <span class="n">provides</span> <span class="n">interface</span> <span class="n">Read</span><span class="o">&lt;</span><span class="kt">uint16_t</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+  <span class="k">enum</span> <span class="p">{</span>
+	<span class="n">ID</span> <span class="o">=</span> <span class="n">unique</span><span class="p">(</span><span class="n">UQ_MAG_RESOURCE</span><span class="p">)</span>
+  <span class="p">};</span>
+  
+  <span class="n">components</span> <span class="n">MagReadP</span><span class="p">,</span><span class="n">MagConfigP</span><span class="p">,</span> <span class="n">new</span> <span class="n">AdcReadClientC</span><span class="p">()</span> <span class="n">as</span> <span class="n">AdcX</span><span class="p">;</span>
+
+  <span class="n">Mag</span> <span class="o">=</span> <span class="n">MagReadP</span><span class="p">;</span>
+
+  <span class="n">Read</span> <span class="o">=</span> <span class="n">MagReadP</span><span class="p">.</span><span class="n">MagX</span><span class="p">[</span><span class="n">ID</span><span class="p">];</span>
+  <span class="n">MagReadP</span><span class="p">.</span><span class="n">ActualX</span><span class="p">[</span><span class="n">ID</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="n">AdcX</span><span class="p">;</span>
+  <span class="n">AdcX</span><span class="p">.</span><span class="n">Atm128AdcConfig</span> <span class="o">-&gt;</span> <span class="n">MagConfigP</span><span class="p">.</span><span class="n">ConfigX</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>其实TinyOS的代码是很好理解的, 只是有时候会将初学者跳晕掉, 太多的配线了, 我们不理解的是为什么解决一个问题要这么麻烦, 干嘛搞这么多的配线啊.其实只要我们理解了这其中的模式, 知道了每一个组件所处的层次, 也就明了了:有时候不是非要这么多配线, 这就是设计层面上的优雅性了, 作者只是将功能很好的分了一个层次. 这样的设计到底好不好, 我们也无法评判, 毕竟传感器网络操作系统的设计, 没有什么可以借鉴的, 很多决策都是在不可预知的情况下作出的.扯远了.</p>
+<p>我们发现这个组件内部全是configuration, 没有module, 那么说明这一层面上所需要的条件都已经具备了, 只需要配置一下就可以了, 不需要写真正的代码.因此写这样的代码就对读者提出了一个要求:你要明白你想要什么以及你通过什么达到这样的目的.这基本就是TinyOS接口所要表达的意思了.比如这个例子:我们希望能够读取这个传感器的数据, 而且最好还能对传感器获取传感器的一些设置.那么我们必须要找到这样功能的组件能提供类似于Read和Mag接口, 幸运的是这货还真有:MagReadP.nc但是新的问题出现了, 这个组件还需要配置接口ActualX, 如果我们查看这个组件内部, 发现其实这个组件只是帮我们解决了Mag接口的需求, 但是Read接口它也不会, 它只是做了一个代理仍给了别人, 并且把它换了一个包装叫做:ActualX(还蛮真诚的), 那么到底谁会提供真正的读取传感器数据的功能呢?我们找到了AdcReadClientC.nc, 这下好了问题基本解决了, 只是这家伙还需要一个接口Atm128AdcConfig接口, 大概和芯片的配置有关, 我们得找找了, 幸好, 这就是MagConfigP.nc, 这个组件没有再uses什么其它的接口, 任务就完成了, 松了一口气.接下来实际上就是将我们找到的这些组件配在一起, 就OK了.</p>
+<p>有些读者觉得这简直就在糊弄人, 这种分析方法只是自顶向下的, 前提是你必须是糕富帅, 你要什么有什么, 其实笔者只是提供了这样一个思路, 说明TinyOS的这种设计哲学, 这恰恰和真实社会的组织结构非常相似, 这就是社会分工, 每个人都或多或少的能够为别人提供一些服务, 同时他也需要借助别人的力量, 在TinyOS这个世界里, 我们就像BOSS一样, 我们有很多这样忠实的组件, 我们需要做的事情就是发挥BOSS的作用.读者如果从现实社会中走一遭, 或许会发现还是代码的世界乐趣多:), 其实相对于这些代码的复杂度是没法和现实社会的复杂度所相比的.因此我们不要抱怨学习一个新的工具又是一大陀文档啊什么的, 要从根本上热爱他们!比如tinyos的官方文档http://www.tinyos.net/tinyos-2.1.0/doc/nesdoc/micaz/, 其实每一个配线图都是一张社交图谱, 它们就活跃在你的眼皮底下, 不要错过他们!社会分工其实在什么年代都不会消亡, 即使在遥远的未来, 只是那时人换成了机器, 或许那时我们的文档上的组件换成了真正的AI机器, 程序员的编程方式发生了根本的改变.</p>
+<p>从这个角度来说, 我们就不再困惑为什么配线图这么复杂, 也就明白了构建大型的软件是需要时间的, 可能包括一些重构, 我们要做的就是利用这种架构快速的开发自己的应用, 并在喝咖啡的时候, 从美学角度审视她, 观察她的每一个部分, 深入进去.我想这就是为什么对于一个设计的优美的软件系统程序员会发疯, 一旦理解了其中的精髓, 我们会被深深的迷住.</p>
+<h3><span class="caps">ADC</span></h3>
+<p>忘了我们今天的主题是讨论ADC, 我们继续:)</p>
+<p>从上一段的讲述中我们得知MagXC.nc Read接口部分是AdcReadClientC.nc做的, 我们继续发现:</p>
+<p>果不其然, 这个文件在tos/chips/atm128/adc中, 按照上一节的方法, 我们发现&quot;真正&quot;提供Read功能的组件来自WireAdcP.nc, 对于其它组件我们不再驻足观看, 而WireAdcP.nc的Read来自AdcP.nc, 然后发现AdcP.nc也是做了代理, 最终和两个文件相关:</p>
+<p>Atm128AdcP.nc和HplAtm128AdcP.nc, 之所以不再说一个文件, 因为再继续查看下去会到达中断处理函数, 其实最终读取数据并不是都是那个函数在干, 还需要上一层的组件来配置一下寄存器, 或许还要开启一些中断, 基本上就是这样了, 接下来我们详细剖析这两个组件.</p>
+<h3>Atm128AdcP.nc <span class="caps">AND</span> HplAtm128AdcP.nc</h3>
+<p>我们来看核心代码:<br />
+上层应用程序的Read需求经过层层代理转发, 到达了这一层的一个函数:(Atm128AdcP.nc), 我进行了注释.</p>
+<div class="highlight"><pre><code class="c">	<span class="kt">void</span> <span class="nf">getData</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">channel</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">refVoltage</span><span class="p">,</span> <span class="n">bool</span> <span class="n">leftJustify</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">prescaler</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">Atm128Admux_t</span> <span class="n">admux</span><span class="p">;</span>     <span class="c1">// ADMUX 寄存器</span>
+			
+		<span class="n">Atm128Adcsra_t</span> <span class="n">adcsr</span><span class="p">;</span>    <span class="c1">// ADCSR 寄存器</span>
+
+		<span class="n">admux</span> <span class="o">=</span> <span class="n">call</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">getAdmux</span><span class="p">();</span>
+		<span class="n">f</span><span class="p">.</span><span class="n">precise</span> <span class="o">=</span> <span class="n">isPrecise</span><span class="p">(</span><span class="n">admux</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">refVoltage</span><span class="p">);</span>
+		<span class="n">f</span><span class="p">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span>
+
+		<span class="n">admux</span><span class="p">.</span><span class="n">refs</span> <span class="o">=</span> <span class="n">refVoltage</span><span class="p">;</span>
+		<span class="n">admux</span><span class="p">.</span><span class="n">adlar</span> <span class="o">=</span> <span class="n">leftJustify</span><span class="p">;</span>
+		<span class="n">admux</span><span class="p">.</span><span class="n">mux</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span>
+		<span class="n">call</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">setAdmux</span><span class="p">(</span><span class="n">admux</span><span class="p">);</span>
+
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">aden</span> <span class="o">=</span> <span class="n">ATM128_ADC_ENABLE_ON</span><span class="p">;</span>
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">adsc</span> <span class="o">=</span> <span class="n">ATM128_ADC_START_CONVERSION_ON</span><span class="p">;</span>
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">adfr</span> <span class="o">=</span> <span class="n">f</span><span class="p">.</span><span class="n">multiple</span><span class="p">;</span>
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">adif</span> <span class="o">=</span> <span class="n">ATM128_ADC_INT_FLAG_ON</span><span class="p">;</span> <span class="c1">// clear any stale flag</span>
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">adie</span> <span class="o">=</span> <span class="n">ATM128_ADC_INT_ENABLE_ON</span><span class="p">;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">prescaler</span> <span class="o">==</span> <span class="n">ATM128_ADC_PRESCALE</span><span class="p">)</span>
+		  <span class="n">prescaler</span> <span class="o">=</span> <span class="n">call</span> <span class="n">Atm128Calibrate</span><span class="p">.</span><span class="n">adcPrescaler</span><span class="p">();</span>
+		<span class="n">adcsr</span><span class="p">.</span><span class="n">adps</span> <span class="o">=</span> <span class="n">prescaler</span><span class="p">;</span>
+		<span class="n">call</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">setAdcsra</span><span class="p">(</span><span class="n">adcsr</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">async</span> <span class="n">command</span> <span class="n">bool</span> <span class="n">Atm128AdcSingle</span><span class="p">.</span><span class="n">getData</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">channel</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">refVoltage</span><span class="p">,</span>
+					     <span class="n">bool</span> <span class="n">leftJustify</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">prescaler</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">atomic</span>
+      <span class="p">{</span>
+	<span class="n">f</span><span class="p">.</span><span class="n">multiple</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+	<span class="n">getData</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">refVoltage</span><span class="p">,</span> <span class="n">leftJustify</span><span class="p">,</span> <span class="n">prescaler</span><span class="p">);</span>
+
+	<span class="k">return</span> <span class="n">f</span><span class="p">.</span><span class="n">precise</span><span class="p">;</span>
+      <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div><p>在更底层的HplAtm128AdcP.nc我们又发现了中断处理函数:</p>
+<div class="highlight"><pre><code class="c">	<span class="n">async</span> <span class="n">command</span> <span class="kt">uint16_t</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="p">{</span> 
+		<span class="k">return</span> <span class="n">ADC</span><span class="p">;</span> 
+	<span class="p">}</span>
+
+	<span class="cm">/* A/D interrupt handlers. Signals dataReady event with interrupts enabled */</span>
+	<span class="n">AVR_ATOMIC_HANDLER</span><span class="p">(</span><span class="n">SIG_ADC</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">uint16_t</span> <span class="n">data</span> <span class="o">=</span> <span class="n">call</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">getValue</span><span class="p">();</span>
+    
+    <span class="n">__nesc_enable_interrupt</span><span class="p">();</span>
+    <span class="n">signal</span> <span class="n">HplAtm128Adc</span><span class="p">.</span><span class="n">dataReady</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+	<span class="p">}</span>
+</code></pre></div><p>使用avr128的ADC我们需要知道3个寄存器: ADMUX、ADCSRA、SIFOR, ADMUX主要用来设置一些参数,比如参考电压、对齐方式、模拟通道、增益选择.而ADCSRA寄存器主要是用来控制的, 比如使能啊, 中断啊什么的.还有SIFOR则是一个特殊功能寄存器, 主要用在快速ADC中.具体这三个寄存器各个位表示什么意思我就不一个一个说了大家可以去手册查询, 用起来是相当方便的, 一般而言你只需要设置好这三个寄存器, 然后就乖乖的等中断自己到来吧, 当然中断函数你得写好咯.有一个注意点是如果工作在非连续模式下, 转换结束我们要将ADCSRA寄存器的ADEN置为0关闭它, 等待下一次开启.(当然更严谨的还要设置其它位, 不过这个设置好就可以读取数据了).</p>
+<p>参考我们的研究结果, 写一个一步到位的, 巩固一下. 也就是说我们要写驱动啦!</p>
+<h3><span class="caps">ADC</span> 例子</h3>
+<div class="highlight"><pre><code class="c"><span class="n">module</span> <span class="n">TempDeviceP</span> <span class="p">{</span>
+	<span class="n">provides</span> <span class="n">interface</span> <span class="n">Read</span><span class="o">&lt;</span><span class="kt">uint16_t</span><span class="o">&gt;</span> <span class="n">as</span> <span class="n">Temp</span><span class="p">;</span>
+	<span class="n">provides</span> <span class="n">interface</span> <span class="n">Init</span> <span class="n">as</span> <span class="n">SoftwareInit</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">implementation</span> <span class="p">{</span>
+	<span class="k">volatile</span> <span class="kt">uint16_t</span> <span class="n">data</span><span class="p">;</span>
+
+	<span class="n">command</span> <span class="n">error_t</span> <span class="n">SoftwareInit</span><span class="p">.</span><span class="n">init</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="c1">// 这里的两句话不是凭空出现的, 读者如果有crossbow的micaz节点</span>
+		<span class="c1">// 和mts300cb传感器背板就知道了, PW0管脚是用来给温度传感器</span>
+		<span class="c1">// 供电的!</span>
+		<span class="n">DDRC</span>  <span class="o">|=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">);</span>   <span class="c1">// PW0位设置为输出</span>
+		<span class="n">PORTC</span> <span class="o">|=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">0</span><span class="p">);</span>   <span class="c1">// PW0位设置为High</span>
+		<span class="k">return</span> <span class="n">SUCCESS</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="n">command</span> <span class="n">error_t</span> <span class="n">Temp</span><span class="p">.</span><span class="n">read</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="c1">// 这个是mica tempeature的配置</span>
+		<span class="n">ADMUX</span> <span class="o">=</span> <span class="mh">0x21</span><span class="p">;</span>        <span class="c1">// 0010 0001</span>
+		                     <span class="c1">// 位7、6 REFS1~REFS0  : 00(以外部AREF为基准比较电压)</span>
+		                     <span class="c1">// 位5                 : 1 (左对齐)</span>
+		                     <span class="c1">// 位4~0 MUX4~MUX0     : 00001(channel1)</span>
+
+		<span class="n">ADCSRA</span> <span class="o">=</span> <span class="mh">0xd8</span> <span class="o">|</span> <span class="n">ATM128_ADC_PRESCALE_2</span><span class="p">;</span>
+							 <span class="c1">// 1101 1000</span>
+		                     <span class="c1">// 位7                 : 1 (ADC使能)</span>
+		                     <span class="c1">// 位6                 : 1 (开始转换)</span>
+		                     <span class="c1">// 位5                 : 0 (关闭连续工作模式)</span>
+		                     <span class="c1">// 位4                 : 1 (中断标志)</span>
+		                     <span class="c1">// 位3                 : 1  (中断使能)</span>
+			                 <span class="c1">// 位2,1,0             : 000 (不开预分频器)</span>
+
+		<span class="n">SFIOR</span> <span class="o">=</span> <span class="mh">0x00</span><span class="p">;</span>        <span class="c1">// 不工作在快速模式下</span>
+
+		<span class="k">return</span> <span class="n">SUCCESS</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="n">task</span> <span class="kt">void</span> <span class="n">dataReady</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="n">atomic</span> <span class="p">{</span>
+			<span class="n">signal</span> <span class="n">Temp</span><span class="p">.</span><span class="n">readDone</span><span class="p">(</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="n">CLR_BIT</span><span class="p">(</span><span class="n">ADCSRA</span><span class="p">,</span> <span class="n">ADEN</span><span class="p">);</span>  <span class="c1">// 结束以后手动将ADCSRA的ADEN为置0</span>
+	<span class="p">}</span>
+
+	<span class="c1">// ADC中断处理函数, 这个是avr-gcc的写法, 后面的hwevent是nesc内部的</span>
+	<span class="c1">// 编译器注释, 表示这是一个硬件中断, 这样它会相应的进行一些处理.</span>
+	<span class="c1">// 再后面的@C()则表示这是一个C语言语句, nesc编译器不要对它进行重命名</span>
+	<span class="kt">void</span> <span class="n">SIG_ADC</span><span class="p">()</span> <span class="n">__attribute__</span> <span class="p">((</span><span class="n">interrupt</span><span class="p">))</span> <span class="err">@</span><span class="n">hwevent</span><span class="p">()</span> <span class="err">@</span><span class="n">C</span><span class="p">()</span> <span class="p">{</span>
+		<span class="n">atomic</span> <span class="p">{</span>
+			<span class="n">data</span> <span class="o">=</span> <span class="n">ADC</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="n">post</span> <span class="n">dataReady</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>用我的这个驱动, 我写了一个具体的, 读者可以将基站烧写为BaseStation, 然后将我的adc例子烧到另外一个节点上装上mts300cb传感器, 在pc机上用java net.tinyos.tools.Listen -comm serial@/dev/ttyUSB1:57600命令看看收到的结果, 当然这个adc还只是模拟值, 怎么变换大家自己去找公式咯.</p>
+<ul>
+	<li>[下载] <a href="/code/nesc/adc.tar.gz">adc.tar.gz</a></li>
+</ul>
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2012/12/experiences-from-a-decade-of-tinyos-development/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        url = '/2012/12/Beginning-JavaScript-3rd-edition/';
+        
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-01T17:33:18+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>
