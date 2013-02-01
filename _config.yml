@@ -4,6 +4,7 @@ safe: false # safe设置为true, 禁用插件, false为允许
 # 有了exclude, LICENSE.md、等文件就不会在_site中出现, 这里不使用这个选项
 exclude:
   .git
+  forest
 #  LICENSE.md
 #  README.md
 #  Rakefile
