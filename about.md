@@ -3,7 +3,7 @@ title: About me
 layout: "page-plus-comment"
 ---
 
-Hi, My Name is Liu Peng, You can <strong>follow me </strong> in {% include googleplus.html %}
+Hi, My Name is Liu Peng, You can <strong>follow me </strong> in {% include googlebadge.html %}
 
 ### Also You Can Find Me
 
