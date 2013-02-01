@@ -3,13 +3,29 @@
   <title>Forest Gump</title>
   <link href="http://forestgump.me/"/>
   <link href="http://forestgump.me/atom.xml" rel="self"/>
-  <updated>2013-02-02T02:11:11+08:00</updated>
+  <updated>2013-02-02T02:25:18+08:00</updated>
   <id>http://forestgump.me/</id>
   <author>
     <name>Liu Peng</name>
     <email>cow.vangogh@gmail.com</email>
   </author>
 
+  
+  <entry>
+    <title>四轴Mini Drone</title>
+    <link href="http://forestgump.me/2013/02/mini-drone/?utm_source=atom&amp;utm_medium=rss&amp;utm_campaign=atom"/>
+    <updated>2013-02-02T00:00:00+08:00</updated>
+    <id>http://forestgump.me/2013/02/mini-drone</id>
+    <content type="html">&lt;p&gt;看一段视频(加载慢, 要等一会):&lt;/p&gt;
+
+&lt;object id=&quot;flashObj&quot; width=&quot;620&quot; height=&quot;350&quot; classid=&quot;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&quot; codebase=&quot;http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,47,0&quot;&gt;&lt;param name=&quot;movie&quot; value=&quot;http://c.brightcove.com/services/viewer/federated_f9?isVid=1&amp;isUI=1&quot; /&gt;&lt;param name=&quot;bgcolor&quot; value=&quot;#FFFFFF&quot; /&gt;&lt;param name=&quot;flashVars&quot; value=&quot;videoId=2132463218001&amp;playerID=1275216913001&amp;playerKey=AQ~~,AAABBzUwv1E~,xP-xFHVUstjFMsS-3Kb8-iZB6sJ0hUm_&amp;domain=embed&amp;dynamicStreaming=true&quot; /&gt;&lt;param name=&quot;base&quot; value=&quot;http://admin.brightcove.com&quot; /&gt;&lt;param name=&quot;seamlesstabbing&quot; value=&quot;false&quot; /&gt;&lt;param name=&quot;allowFullScreen&quot; value=&quot;true&quot; /&gt;&lt;param name=&quot;swLiveConnect&quot; value=&quot;true&quot; /&gt;&lt;param name=&quot;allowScriptAccess&quot; value=&quot;always&quot; /&gt;&lt;embed src=&quot;http://c.brightcove.com/services/viewer/federated_f9?isVid=1&amp;isUI=1&quot; bgcolor=&quot;#FFFFFF&quot; flashVars=&quot;videoId=2132463218001&amp;playerID=1275216913001&amp;playerKey=AQ~~,AAABBzUwv1E~,xP-xFHVUstjFMsS-3Kb8-iZB6sJ0hUm_&amp;domain=embed&amp;dynamicStreaming=true&quot; base=&quot;http://admin.brightcove.com&quot; name=&quot;flashObj&quot; width=&quot;620&quot; height=&quot;350&quot; seamlesstabbing=&quot;false&quot; type=&quot;application/x-shockwave-flash&quot; allowFullScreen=&quot;true&quot; allowScriptAccess=&quot;always&quot; swLiveConnect=&quot;true&quot; pluginspage=&quot;http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash&quot;&gt;&lt;/embed&gt;&lt;/object&gt;
+
+
+&lt;p&gt;这个和之前在&lt;a href=&quot;http://www.guokr.com/article/6171/&quot;&gt;guokr&lt;/a&gt;上看到的很像:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/sizhou-guokr.png&quot; alt=&quot;PCB板四轴&quot; /&gt;&lt;/p&gt;
+</content>
+  </entry>
   
   <entry>
     <title>Git Submodule使用</title>
