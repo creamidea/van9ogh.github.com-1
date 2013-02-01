@@ -25,12 +25,19 @@ Hi, My Name is Liu Peng, You can <strong>find me</strong> as folows:
    - hardware: avr、stm32, stc51, msp430, pcb
    - software: TinyOS/nesC, uc/OS2, ucLinux, Linux, Contiki
  - wireless sensor network
-   - Viz: [tinyos-graphics](https://github.com/van9ogh/tinyos-graphics)
+
+### Projects
+   - [stc-isp](http://forestgump.me/stc-isp/) An command line STC 8051 ISP programmer for linux
+   - [tinyos-graphics](https://github.com/van9ogh/tinyos-graphics) 无线传感器采集与展示项目
+
 
 ### 最新的xkcd漫画
 
 <div id="xkcdcontent" style="text-align: center"></div>
 
 {% include xkcdcomic.html %}
+
+<p>
+<p>
 
 {% include disqus.html %}
