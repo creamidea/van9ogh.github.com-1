@@ -45,7 +45,7 @@ layout: html
 
 
   <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
-{% if site.related_posts != empty %}
+<!--{% if site.related_posts != empty %}
   <!-- 用来产生一条下划线-->
   <header>
   </header>
@@ -54,7 +54,7 @@ layout: html
   {% for post in site.related_posts %} 
     <li><a href="{{ post.url }}">{{ post.title }}</a><br /></li>
   {% endfor %}
-{% endif %}
+{% endif %}-->
 
   <!-- 产生一行空白, 增大间距 -->
   <p>

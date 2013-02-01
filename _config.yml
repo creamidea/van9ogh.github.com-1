@@ -1,5 +1,6 @@
 pygments: true
 safe: false # safe设置为true, 禁用插件, false为允许
+lsi: false  # 用于related_posts, 默认情况下github也是禁用这个选项的
 
 # 有了exclude, LICENSE.md、等文件就不会在_site中出现, 这里不使用这个选项
 exclude:
@@ -27,5 +28,3 @@ img_url: "http://i1277.photobucket.com/albums/y489/van9ogh/forestgump"
 
 # 用于标签include_code
 code_dir: "/code"
-
-destination: "blog"
