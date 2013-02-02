@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Internet Censorship in China: Where Does the Filtering Occur?"
-subtitle: "—— 中国的网络审察制度: 到底这些filtering发生在什么地方"
+subtitle: "—— 中国的网络审查制度: 到底这些filtering发生在什么地方"
 categories:
 - gfw
 tags:
@@ -46,7 +46,7 @@ ipfw add 1000 drop tcp from any to me tcpflags rst in
 
 #### 2) <<[ConceptDoppler: A Weather Tracker for Internet Censorship](http://www.csd.uoc.gr/~hy558/papers/conceptdoppler.pdf)>>
 
-这篇文章相当有影响力, 因为它发现和大家之前普遍想象的圆形监狱防火墙不一样, filtering行为并没有完全发生在边界路由器上, 它更像是集中在自治系统之中.而且这篇论文也发现了防火墙其实是有状态的, 因为单独一个携带敏感关键字的GET包并不会触发防火墙, 然而如果这是一个经过了TCP三次握手的, 情况就不一样了.这个观点和之前的论文相反.另外这篇论文展示了这些IDS发送的RST包(reset packet)比之前更为复杂, RST包的TTL值被精心设计, 于是就无法通过观察TTL值来发现这些设备的踪迹.
+这篇文章相当有影响力, 因为它发现和大家之前普遍想象的圆形监狱防火墙不一样, filtering行为并没有完全发生在边界路由器上, 它更像是集中在自治系统之中.而且这篇论文也发现了防火墙其实是有状态的, 因为单独一个携带敏感关键字的GET包并不会触发防火墙, 然而如果这是一个经过了TCP三次握手的, 情况就不一样了.这个观点和之前的论文相反.另外这篇论文展示了这些IDS发送的RST包(reset packet)比之前更为复杂, RST包的TTL值被精心设计, 于是就无法通过观查TTL值来发现这些设备的踪迹.
 
 #### 3) <<[Backbone-Level Filtering of HTML Responses in China](/files/articles/mongol-5.pdf)>>
 
@@ -63,7 +63,7 @@ ipfw add 1000 drop tcp from any to me tcpflags rst in
 2. 探索中国的自治系统AS的分布
 =============================
 
-这项工作是下面一项工作的基础, 有了这些数据, 就可以分析GFW的位置了.对于中国国内的流量, 国家是不会去使用GFW做审察的, 因为流量太大了, 成本太高, 因此主要的手段还是从舆论控制、监督、以及互相审察、自我审察着手.
+这项工作是下面一项工作的基础, 有了这些数据, 就可以分析GFW的位置了.对于中国国内的流量, 国家是不会去使用GFW做审查的, 因为流量太大了, 成本太高, 因此主要的手段还是从舆论控制、监督、以及互相审查、自我审查着手.
 
 通过大量的基础工作, 最终将中国的AS Number(自治系统的编号)和它的IP进行一一对应, 最终发现的结果是:
 
@@ -72,7 +72,7 @@ ipfw add 1000 drop tcp from any to me tcpflags rst in
 ![Table1: Chinese ISP with most number of unique peerings to foreign AS](/images/mongol-img-table1.png)
 
 
-最后作者根据这些数据画出了一棵关于中国AS的拓扑树. 我们发现: 树的深度仅为2(实际上, 138个内部AS中, 只有18个深度为2), 87.0%的内部AS直接连接到边界AS上, 边界AS大多属于骨干网络, 它们只有24个.这就表明内容审察最可能发生在骨干网上.
+最后作者根据这些数据画出了一棵关于中国AS的拓扑树. 我们发现: 树的深度仅为2(实际上, 138个内部AS中, 只有18个深度为2), 87.0%的内部AS直接连接到边界AS上, 边界AS大多属于骨干网络, 它们只有24个.这就表明内容审查最可能发生在骨干网上.
 
 <span id="3"></span>
 
@@ -234,7 +234,7 @@ fdout.close()
 
 图三就是最终这些设备的方位.
 
-还有一个信息需要知道的是: 电信并没有将"鸡蛋"都放在骨干网, 而是让它们分布在各个省级网络中, 这样的布局让骨干网路减轻了压力.更易于进行审察.
+还有一个信息需要知道的是: 电信并没有将"鸡蛋"都放在骨干网, 而是让它们分布在各个省级网络中, 这样的布局让骨干网路减轻了压力.更易于进行审查.
 
 最后放一张在Google+上发现的的GFW布防图:
 
