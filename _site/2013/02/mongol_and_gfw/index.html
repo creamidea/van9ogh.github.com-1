@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Internet Censorship in China: Where Does the Filtering Occur? | Forest Gump</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="/css/style.css">
+  <link type="text/css" rel="stylesheet" media="print" href="/css/print.css">
+  <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+
+
+  <link rel="alternate" type="application/atom+xml" title="RSS feed of blog posts" href="http://feeds.feedburner.com/mattscharleyme">
+  <link rel="canonical" href="http://forestgump.me/2013/02/mongol_and_gfw/">
+
+  <!--[if lt IE 9]>
+  <script>var a = ['header','footer','section','aside','nav','article','hgroup'];for(var b in a){document.createElement(a[b]);}</script>
+
+  <link type="text/css" rel="stylesheet" href="/css/ie8.css">
+  <![endif]-->
+
+  <!-- Google Analysis 模块 -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38171702-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+
+</head>
+<body>
+<!--[if lt IE 9]>
+<noscript>
+  <div id="banner"><div class="inner">
+    <strong>Warning!</strong>
+    Because your browser does not support HTML5, some elements are simulated using JavaScript.
+    Unfortunately your browser has disabled scripting. Please enable it in order to display this page.
+  </div></div>
+</noscript>
+<![endif]-->
+<div id="container">
+    <nav class="site">
+  <ul>
+    <li><a href="/index.html">Home</a></li>
+    <li><a href="/about.html">About</a></li>
+  </ul>
+</nav>
+
+    <div id="page">
+      <article id="main" class="post">
+  <header>
+    <hgroup>
+      <h1>Internet Censorship in China: Where Does the Filtering Occur?</h1>
+      <h3 style="text-align: right;">—— 中国的网络审察制度: 到底这些filtering发生在什么地方</h2>
+    </hgroup>
+    <p class="posted-time">
+      Written by
+      <span class="author">
+        
+          <a href="mailto:cow.vangogh@gmail.com">Liu Peng</a>
+        
+      </span>
+      at
+      <span class="date">
+        Saturday, 02 February 2013 - 00:00
+      </span>
+    </p>
+    
+	<p class="date"><strong>[PS] </strong> Press keyboard <strong>[->]<-] </strong> to read previous/next artical.</p>
+
+	<!-- 判断tags是否存在, 如果存在才显示tags -->
+    <nav class="tags">
+	
+	  <strong>Tags:</strong> 
+	
+	  <ul>
+        
+          <li>gfw</li>
+        
+          <li>mongol</li>
+        
+          <li>censorship</li>
+        
+          <li>scapy</li>
+        
+          <li>github</li>
+        
+          <li>topology</li>
+        
+          <li>network measurement</li>
+        
+      </ul>
+    </nav>
+  </header>
+
+  <p>最近听闻github上的项目<a href="https://github.com/mothran/mongol">mongol</a>可以定位gfw的位置, 我觉得很有趣, 作者称参考了<a href="http://pam2011.gatech.edu/papers/pam2011--Xu.pdf">Xu</a>的论文, 看了一下这篇论文, 下面简要的介绍一下.</p>
+
+<h1>目录</h1>
+
+<ul>
+<li><a href="#1">之前的一些相关工作</a></li>
+<li><a href="#2">中国的自治系统AS的分布</a></li>
+<li><a href="#3">定位Filtering设备</a></li>
+<li><a href="#4">总结</a></li>
+</ul>
+
+
+<p><span id="1"></span></p>
+
+<h1>1. 之前的一些相关工作</h1>
+
+<p><strong>作者提到了三篇论文: </strong></p>
+
+<h4>1) &lt;&lt;<a href="http://www.cl.cam.ac.uk/~rnc1/ignoring.pdf">Ignoring the Great Firewall of China</a>>></h4>
+
+<p>这个文章人气很旺, 中文的翻译叫做&lt;&lt;如何忽略防火长城>>, 文章讲到了GFW的原理是向server和client同时发送reset packet, 因此只要使用server和client使用类似iptables这样的工具忽略reset packet就可以完全忽视防火长城, 作者也给出了命令:</p>
+
+<div class="highlight"><pre><code class="sh">// linux
+iptables -A INPUT -p tcp --tcp-flags RST RST -j DROP
+
+// 或者FreeBSD
+ipfw add 1000 drop tcp from any to me tcpflags rst in
+</code></pre></div>
+
+
+<p>本文甚至还说GFW并没有维护状态.</p>
+
+<h4>2) &lt;&lt;<a href="http://www.csd.uoc.gr/~hy558/papers/conceptdoppler.pdf">ConceptDoppler: A Weather Tracker for Internet Censorship</a>>></h4>
+
+<p>这篇文章相当有影响力, 因为它发现和大家之前普遍想象的圆形监狱防火墙不一样, filtering行为并没有完全发生在边界路由器上, 它更像是集中在自治系统之中.而且这篇论文也发现了防火墙其实是有状态的, 因为单独一个携带敏感关键字的GET包并不会触发防火墙, 然而如果这是一个经过了TCP三次握手的, 情况就不一样了.这个观点和之前的论文相反.另外这篇论文展示了这些IDS发送的RST包(reset packet)比之前更为复杂, RST包的TTL值被精心设计, 于是就无法通过观察TTL值来发现这些设备的踪迹.</p>
+
+<h4>3) &lt;&lt;<a href="/files/articles/mongol-5.pdf">Backbone-Level Filtering of HTML Responses in China</a>>></h4>
+
+<p>这篇文章是最近的一项工作的结果, 是为了论证到底GFW是不是有状态的, 最后显示确实是有状态的.</p>
+
+<p><strong>于是作者根据这些论文提出了几点:</strong></p>
+
+<ul>
+<li>去验证到底是不是论文2所说的GFW集中在自治系统之中.</li>
+<li>使用增量的TTL值的RST包来进行刺探.</li>
+<li>验证GFW是不是有状态的.</li>
+</ul>
+
+
+<p><span id="2"></span></p>
+
+<h1>2. 探索中国的自治系统AS的分布</h1>
+
+<p>这项工作是下面一项工作的基础, 有了这些数据, 就可以分析GFW的位置了.对于中国国内的流量, 国家是不会去使用GFW做审察的, 因为流量太大了, 成本太高, 因此主要的手段还是从舆论控制、监督、以及互相审察、自我审察着手.</p>
+
+<p>通过大量的基础工作, 最终将中国的AS Number(自治系统的编号)和它的IP进行一一对应, 最终发现的结果是:</p>
+
+<p><strong>找到了138个内部AS, 24个边界AS, 92个外部AS</strong>.这中间62%的AS属于中国电信(CHINANET), 23%的AS属于网通, 这两家处理了与国际63.9%的数据通信. 这些边界自治系统至少连接着20多个国家, 美国是最大的, 占到了52%, Hongkong和Japan位列2, 3.分别是21%和11%, 这项工作对于以后分析GFC是否会对不同的国家实行不同的Filtering政策也是十分有帮助的.</p>
+
+<p><img src="/images/mongol-img-table1.png" alt="Table1: Chinese ISP with most number of unique peerings to foreign AS" /></p>
+
+<p>最后作者根据这些数据画出了一棵关于中国AS的拓扑树. 我们发现: 树的深度仅为2(实际上, 138个内部AS中, 只有18个深度为2), 87.0%的内部AS直接连接到边界AS上, 边界AS大多属于骨干网络, 它们只有24个.这就表明内容审察最可能发生在骨干网上.</p>
+
+<p><span id="3"></span></p>
+
+<h1>3. 定位Filtering设备</h1>
+
+<p><strong>干了三件事:</strong></p>
+
+<ol>
+<li>验证了GFW是有状态的</li>
+<li>搜集中国的网站, 为测试做准备.最终包含了1549家网站, 地理位置是通过一个叫做<a href="http://www.cz88.net">纯真</a>网站完成的.</li>
+<li>定位</li>
+</ol>
+
+
+<p>逻辑是这样的:</p>
+
+<div class="highlight"><pre><code class="text">foreach IP in websites
+    if (online) and (accept tcp connection) then 
+        (send HTTP GET request)
+    endif
+    if (receive RST packet) or (connection timeout) then 
+        (skip this IP)
+    elseif
+        (send HTTP GET with keyword to triggle firewall)
+        (wait 5 second) // 此时GFW被触发
+        (send ACK packet with increasing TTL stop when we receive RST packet) // 此时记下这个IP就是filtering设备
+        if (do not triggle by keyword) then
+            (skip this IP)
+        endif
+    endif
+</code></pre></div>
+
+
+<p>mongol.py里面是这样实现的, 其中它使用了python的一个库:scapy, 读者可以从<a href="https://gist.github.com/4698806">这里</a>查看完整版代码.</p>
+
+<div class="highlight"><pre><code class="python"><span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hostnames</span><span class="p">:</span>
+    <span class="c"># first we create a real handshake and send the censored term</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+ 
+    <span class="c"># why 5 seconds?  idk you got a better idea?</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+ 
+    <span class="c"># make sure we can resolve the host</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ipaddr</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">gaierror</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Could not resolve &quot;</span> <span class="o">+</span> <span class="n">host</span>
+        <span class="k">continue</span>
+ 
+    <span class="c"># make sure the host is up</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ipaddr</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;connection to &quot;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot; has timed out moving on&quot;</span>
+        <span class="k">continue</span> 
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;connection failed, moving on&quot;</span>
+        <span class="k">continue</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">MESSAGE</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">,</span> <span class="n">host</span><span class="p">))</span>
+ 
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;connection to &quot;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot; has timedout moving on, Possibly not a webserver&quot;</span>
+        <span class="k">continue</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;RST: Possibly already blocked&quot;</span>
+        <span class="k">continue</span>
+ 
+    <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+ 
+    <span class="c"># TODO: implement other valid response codes, this is a hack.</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;200 OK&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;302 Redirect&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&quot;401 Unauthorized&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+ 
+        <span class="c"># get a non firewalled ACK trace.</span>
+        <span class="n">noFWprint</span><span class="p">,</span> <span class="n">noFWlist</span> <span class="o">=</span> <span class="n">ackattack</span><span class="p">(</span><span class="n">ipaddr</span><span class="p">)</span>
+ 
+        <span class="c"># http://en.wikipedia.org/wiki/List_of_blacklisted_keywords_in_the_People%27s_Republic_of_China</span>
+        <span class="k">print</span> <span class="s">&quot;Sending stimulus&quot;</span>                
+        <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+ 
+        <span class="k">try</span><span class="p">:</span>
+                   <span class="n">s</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">ipaddr</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s">&quot;connection to &quot;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot; has timedout moving on&quot;</span>
+            <span class="k">continue</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;connection to &quot;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s">&quot; has timedout moving on&quot;</span>
+                        <span class="k">continue</span>
+ 
+        <span class="n">s</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">MESSAGE</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;/&quot;</span><span class="o">+</span><span class="n">Keyword</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span> <span class="p">)</span>
+ 
+        <span class="c"># possibly a delay from the IDS to reaction time</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+ 
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Found a filter</span><span class="se">\n\n</span><span class="s">&quot;</span>
+ 
+            <span class="c"># get a firewalled trace</span>
+            <span class="n">FWprint</span><span class="p">,</span> <span class="n">FWlist</span> <span class="o">=</span> <span class="n">ackattack</span><span class="p">(</span><span class="n">ipaddr</span><span class="p">)</span>
+ 
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">IPADDR: &quot;</span> <span class="o">+</span> <span class="n">ipaddr</span>
+                <span class="k">print</span> <span class="s">&quot;Without FW:&quot;</span>
+                <span class="k">print</span> <span class="n">noFWprint</span>
+                <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">With FW:&quot;</span>
+                        <span class="k">print</span> <span class="n">FWprint</span>
+ 
+            <span class="n">filterIP</span> <span class="o">=</span> <span class="n">FWlist</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="c"># we only check the first 3 octecs because of variation in the routers depending on</span>
+            <span class="c"># firewall status</span>
+            <span class="c"># fuck regex&#39;s</span>
+            <span class="n">shortip</span> <span class="o">=</span> <span class="n">filterIP</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+            <span class="n">shortip</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">shortip</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">shortip</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">shortip</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="k">print</span> <span class="s">&quot;shortip: &quot;</span> <span class="o">+</span> <span class="n">shortip</span>
+ 
+            <span class="c"># add the firewall&#39;s IP to the list to be written out if it does not already exist</span>
+            <span class="k">if</span> <span class="n">filterIP</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">firewalls</span><span class="p">:</span>
+                <span class="n">firewalls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filterIP</span><span class="p">)</span>
+                <span class="n">fdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filterIP</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+                <span class="n">fdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+ 
+            <span class="k">if</span> <span class="n">shortip</span> <span class="ow">in</span> <span class="n">noFWlist</span><span class="p">:</span>
+                <span class="n">hopsdiff</span> <span class="o">=</span> <span class="n">noFWlist</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">filterIP</span><span class="p">)</span> <span class="o">-</span> <span class="n">FWlist</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">filterIP</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s">&quot;Guess: &quot;</span> <span class="o">+</span> <span class="n">filterIP</span>
+                <span class="k">print</span> <span class="s">&quot;IP block: &quot;</span> <span class="o">+</span> <span class="n">shortip</span>
+                <span class="k">print</span> <span class="s">&quot;Hops diff:    &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">hopsdiff</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;Guess: &quot;</span> <span class="o">+</span> <span class="n">filterIP</span>
+ 
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Appears not to be blocking&quot;</span>
+ 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Bad response code from &quot;</span> <span class="o">+</span> <span class="n">host</span>
+        <span class="c">#print response</span>
+        <span class="k">continue</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+ 
+<span class="n">fdout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><span id="4"></span></p>
+
+<h1>4. 总结</h1>
+
+<p>发现了495个Filtering Device, 中国电信占79.4%, 中国电信占17.4%, 剩下的3.2%为其它的ISP, 于之前的研究进行比较, 我们发现中国电信所占比例基本没有变化, 但是网通发生了三倍的增长.我们推测电信的架构基本成熟, 流量的增长还没有超过他们的负载.</p>
+
+<p><img src="/images/mongol-img-table2.png" alt="Table 2. ASes that contain filtering devices" /></p>
+
+<p>图二显示了这些Filtering Device的归属ISP, 来自于: <a href="http://www.team-cymru.org/Services/ip-to-asn.html">http://www.team-cymru.org/Services/ip-to-asn.html</a></p>
+
+<p>意料之中的是, 大多数的Filtering device来自于边界自治系统, 然而我们也发现了2.9%来自内部自治系统, 因此这个很可能是一个由于IP和AS Number映射关系错误造成的.当然这个也并不是一无是处, 我们可以继续监控这些数据, 查明是不是真的是个错误.</p>
+
+<p><img src="/images/mongol-img-table3.png" alt="Table 3. Locations of filtering devices in AS4134" /></p>
+
+<p>图三就是最终这些设备的方位.</p>
+
+<p>还有一个信息需要知道的是: 电信并没有将"鸡蛋"都放在骨干网, 而是让它们分布在各个省级网络中, 这样的布局让骨干网路减轻了压力.更易于进行审察.</p>
+
+<p>最后放一张在Google+上发现的的GFW布防图:</p>
+
+<p><img src="/images/mongol-map.jpg" alt="IDS location" /></p>
+
+<h1>参考</h1>
+
+<ul>
+<li><a href="https://gist.github.com/4635732">这个可能是github上最火的Gist了</a></li>
+<li><a href="http://pam2011.gatech.edu/papers/pam2011--Xu.pdf">Xu的那篇论文</a></li>
+</ul>
+
+
+
+
+  <!-- 显示相关文章, 依据是tags, 如果没有相关文章, 都不显示 -->  
+<!--
+  <header>
+  </header>
+
+  <h3>相关文章</h3>
+   
+    <li><a href="/2013/02/git-submodule/">Git Submodule使用</a><br /></li>
+  
+-->
+
+  <!-- 产生一行空白, 增大间距 -->
+  <p>
+
+  <footer>
+    <!-- disqus评论模块-->
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'van9ogh'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+  </footer>
+</article>
+<script type="text/javascript">
+$(function(){
+  $(document).keydown(function(e) {
+    if (e.target.nodeName.toUpperCase() != 'BODY') return;
+    var url = false;
+        if (e.which == 37 || e.which == 74) {  // Left arrow and J
+            
+        url = '/2013/02/mini-drone/';
+        
+        }
+        else if (e.which == 39 || e.which == 75) {  // Right arrow and K
+            
+        }
+        if (url) {
+            window.location = url;
+        }
+  });
+})
+</script>
+
+      <footer>
+        <div class="copyright">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/" class="license-image">
+  <img alt="Creative Commons License" width="88" height="31"
+      src="http://i.creativecommons.org/l/by-nc-sa/3.0/au/88x31.png">
+</a>
+The content of this blog by
+<a href="http://forestgump.me/">Liu Peng</a> is licensed under a
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/au/">
+  Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Australia License</a>.
+<a rel="license" href="/license.html">Full licensing information</a>.
+</div>
+
+      </footer>
+    </div>
+</div>
+  <footer>
+    Site last generated: 2013-02-03T04:27:48+08:00 <a href="https://github.com/van9ogh/van9ogh.github.com">[src]</a>
+  </footer>
+</body>
+</html>
